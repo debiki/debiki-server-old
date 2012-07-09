@@ -16,23 +16,33 @@ import Prelude._
 import Utils.ValidationImplicits._
 
 
-object AppCreateTenant extends mvc.Controller {
+object AppCreateWebsite extends mvc.Controller {
 
 
-  val (newTenantParentDomain, newTenantPort) = {
-    def getString = Play.configuration.getString(_: String, validValues = None)
-    val domain = getString("new-tenant.parent-domain") getOrElse "localhost"
-    val port = getString("new-tenant.port") getOrElse ""
-    (domain, port)
+  /**
+   * The one and only host from which it's allowed to create new websites.
+   * Example: www.debiki.net — and www.debiki.com has to redirect to
+   * www.debiki.net, when a new website is to be created.
+   *
+   * Background: www.debiki.net is used *only* for website management.
+   * So if people login to www.debiki.com in order to participate in a
+   * discussion, and leaves their computer, and Mallory comes and takes
+   * it, Mallory won't be able to steal any domain ownership.
+   * — It's supposedly much more common that people login to www.debiki.com
+   * in order to ask something e.g. in a support forum, than that they
+   * login to www.debiki.net to manage their websites (change ownership
+   * or ban admins — essentially never ever happens).
+   */
+  val websiteCreationHost: Option[String] = {
+    val host = Play.configuration.getString("create-website.host")
+    assErrIf(Play.isProd && host.isEmpty,
+      "DwE01kr55", "No create-website.host specified")
+    host
   }
-
-  val _secretNewTenantSalt = "a0kr3Qi8BgwIWF"  // hardcoded, for now
-
-  val _newTenantPasswordHashLength = 12
 
 
   def showLoginForm() = ExceptionActionNoBody { request =>
-    Ok(views.html.createTenant(doWhat = "showLoginForm"))
+    Ok(views.html.createWebsite(doWhat = "showLoginForm"))
   }
 
 
@@ -41,22 +51,29 @@ object AppCreateTenant extends mvc.Controller {
       implicit request =>
 
     AppAuthOpenid.asyncLogin(
-      returnToUrl = routes.AppCreateTenant.showCreateWebsiteForm.absoluteURL())
+      returnToUrl = routes.AppCreateWebsite.showCreateWebsiteForm.absoluteURL())
   }
 
 
   def showCreateWebsiteForm() = CheckSidActionNoBody {
         (sidOk, xsrfOk, request) =>
 
-    if (sidOk.roleId isEmpty)
+    if (websiteCreationHost.nonEmpty &&
+        websiteCreationHost != Some(request.host))
+      throwForbidden("DwE32kJ5", "You may not create a website via this host")
+
+    if (sidOk.roleId isEmpty) {
+      // Not logged in. Should always happens the first time, because
+      // we redirect from www.debiki.com to www.debiki.net.
       throwRedirect(
-        routes.AppCreateTenant.showLoginForm().absoluteURL()(request))
+        routes.AppCreateWebsite.showLoginForm().absoluteURL()(request))
+    }
 
-    val curTenantId = AppAuth.lookupTenantByHost(request.host)
-    val ipAddr = request.remoteAddress
-    _throwIfMayNotCreateTenant(curTenantId, ipAddr, sidOk.roleId)
+    val dao = _tenantDao(request, sidOk.roleId)
+    _throwIfMayNotCreateWebsite(dao, loginId = sidOk.loginId,
+       roleId = sidOk.roleId)
 
-    Ok(views.html.createTenant(doWhat = "showCreateWebsiteForm",
+    Ok(views.html.createWebsite(doWhat = "showCreateWebsiteForm",
       xsrfToken = xsrfOk.value))
   }
 
@@ -65,81 +82,60 @@ object AppCreateTenant extends mvc.Controller {
         BodyParsers.parse.urlFormEncoded(maxLength = 100)) {
         (sidOk, xsrfOk, request) =>
 
-    def redirectBackToLoginPage(errorCode: String, errorMessage: String) {
-      throwForbidden(errorCode, errorMessage) // for now
-    }
+    if (sidOk.roleId isEmpty)
+      throwForbidden("DwE013k586", "Cannot create website: Not logged in")
 
-    if (sidOk.roleId isEmpty) redirectBackToLoginPage(
-      "DwE013k586", "Cannot create website: Not logged in")
-
-    val curTenantId = AppAuth.lookupTenantByHost(request.host)
-    val ipAddr = request.remoteAddress
-    val dao = Debiki.tenantDao(curTenantId, ip = ipAddr, roleId = sidOk.roleId)
-
-    val (identity, user) = {
-      val loginId = sidOk.loginId.getOrElse(assErr("DwE01955"))
-      dao.loadIdtyAndUser(loginId) match {
-        case Some((identity, user)) => (identity, user)
-        case None =>
-          runErr("DwE01j920", "Cannot create website: Bad login ID: "+ loginId)
-      }
-    }
-
-    if (!user.isAuthenticated) redirectBackToLoginPage(
-      "DwE01B7", "Cannot create website: User not authenticated. "+
-      "Please do not login as guest")
-
-    if (user.email isEmpty) redirectBackToLoginPage(
-      "DwE56Yr5", "Cannot create website: User's email address unknown. " +
-      "Please use an account that has an email address")
+    val dao = _tenantDao(request, sidOk.roleId)
+    _throwIfMayNotCreateWebsite(dao, loginId = sidOk.loginId,
+       roleId = sidOk.roleId)
 
     // SHOULD consume IP quota — but not tenant quota!? — when generating
     // new tenant ID. Don't consume tenant quota because the tenant
     // would be www.debiki.com?
+    val newTenantId = "abc123" // dao.createTenant(curTenantId, user.id)
 
-    _throwIfMayNotCreateTenant(curTenantId, ipAddr, roleIdOpt = sidOk.roleId)
-
-    val newTenantId = "abc123" // dao.createNewTenant(curTenantId, user.id)
-
-    Redirect(
-      routes.AppCreateTenant.tenantCreated(newTenantId).absoluteURL()(request))
+    Redirect(routes.AppCreateWebsite.websiteCreated(newTenantId)
+       .absoluteURL()(request))
   }
 
 
-  def tenantCreated(newTenantId: String) = CheckSidActionNoBody {
+  def websiteCreated(newTenantId: String) = CheckSidActionNoBody {
         (sidOk, xsrfOk, request) =>
-    Ok(views.html.createTenant(doWhat = "welcomeOwner",
-      manageWebsiteUrl = AppManageTenant.urlToManage(newTenantId)(request)))
+    Ok(views.html.createWebsite(doWhat = "welcomeOwner",
+      manageWebsiteUrl = AppManageWebsites.urlToManage(newTenantId)(request)))
   }
 
 
-  private def _generatePassword(newTenantId: String, ipAddr: String): String = {
-    (new ju.Date).getTime +"."+
-       (math.random * Int.MaxValue).toInt +"."+
-       newTenantId +"."+
-       ipAddr
+  private def _tenantDao(request: mvc.Request[_], roleId: Option[String])
+        : TenantDao = {
+    val curTenantId = AppAuth.lookupTenantByHost(request.host)
+    val ipAddr = request.remoteAddress
+    Debiki.tenantDao(curTenantId, ipAddr, roleId)
   }
 
 
-  private def _signPassword(password: String): String = {
-    val saltedHash = hashSha1Base64UrlSafe(password +"."+ _secretNewTenantSalt)
-       .take(_newTenantPasswordHashLength)
-    password +"."+ saltedHash
-  }
+  private def _throwIfMayNotCreateWebsite(curTenantDao: TenantDao,
+        loginId: Option[String], roleId: Option[String]) {
 
+    val (identity, user) =
+      curTenantDao.loadIdtyAndUser(loginId.getOrElse(assErr("DwE58JB3")))
+        match {
+          case Some((identity, user)) => (identity, user)
+          case None =>
+            runErr("DwE01j920", "Cannot create website: Bad login ID: "+ loginId)
+        }
 
-  private def _throwIfBadPassword(password: String, tenantId: String,
-        ip: String) {
-    val passwordUnsigned = password.dropRightWhile(_ != '.').dropRight(1)
-    val passwordCorrectlySigned = _signPassword(passwordUnsigned)
-    if (password != passwordCorrectlySigned)
-      throwForbidden("DwE021kR5", "Bad one-time-password")
-  }
+    if (!user.isAuthenticated) _throwRedirectToLoginPage(
+      "DwE01B7", "Cannot create website: User not authenticated. "+
+         "Please login again, but not as guest")
 
+    if (user.email isEmpty) _throwRedirectToLoginPage(
+      "DwE56Yr5", "Cannot create website: User's email address unknown. " +
+         "Please use an account that has an email address")
 
-  private def _throwIfMayNotCreateTenant(
-        curTenantId: String, ipAddr: String, roleIdOpt: Option[String]) {
-    // Perhaps like so:
+    assErrIf(roleId != Some(user.id), "DwE01kJ43")
+
+    // SHOULD also test something like this:
     // Unless logged in:
     //   If > 10 tenants already created from ipAddr, deny.
     // If logged in:
@@ -148,8 +144,9 @@ object AppCreateTenant extends mvc.Controller {
   }
 
 
-  private def _throwIfMayNotLogin(oneTimePassword: String) {
-    // Unless magic token signed correctly by server, deny.
+  private def _throwRedirectToLoginPage(errorCode: String,
+        errorMessage: String) {
+    throwForbidden(errorCode, errorMessage) // for now
   }
 
 }

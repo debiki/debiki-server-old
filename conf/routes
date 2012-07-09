@@ -17,14 +17,16 @@ GET   /-/api/login-openid-clbk  controllers.AppAuthOpenid.loginCallback(returnTo
 GET   /-/api/logout             controllers.AppAuth.logout
 POST  /-/api/logout             controllers.AppAuth.logout
 
-GET   /-/create-website-login   controllers.AppCreateTenant.showLoginForm
-POST  /-/create-website-login   controllers.AppCreateTenant.handleLoginForm
-GET   /-/create-website         controllers.AppCreateTenant.showCreateWebsiteForm
-POST  /-/create-website         controllers.AppCreateTenant.handleCreateWebsiteForm
-GET   /-/created-website/id/:id controllers.AppCreateTenant.tenantCreated(id)
+GET   /-/create-website-login   controllers.AppCreateWebsite.showLoginForm
+POST  /-/create-website-login   controllers.AppCreateWebsite.handleLoginForm
+GET   /-/create-website         controllers.AppCreateWebsite.showCreateWebsiteForm
+POST  /-/create-website         controllers.AppCreateWebsite.handleCreateWebsiteForm
+GET   /-/created-website/id/:id controllers.AppCreateWebsite.websiteCreated(id)
 
+# Single page applications, written in AngularJS
 GET   /-/admin/                 controllers.Assets.at(path = "/public/admin", file = "admin-page.html")
 GET   /-/manage-websites/       controllers.Assets.at(path = "/public/manage-websites", file = "index.html")
-GET   /-/*file                  controllers.Assets.at(path = "/public", file)
 
+# Javascript, CSS and images
+GET   /-/*file                  controllers.Assets.at(path = "/public", file)
 
