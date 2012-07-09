@@ -9,7 +9,7 @@ import debiki._
 import debiki.DebikiHttp._
 import java.{util => ju}
 import play.api._
-import play.api.mvc.{Action => _, AsyncResult, BodyParsers}
+import play.api.mvc.{Action => _, _}
 import play.api.Play.current
 import Actions._
 import Prelude._
@@ -31,84 +31,85 @@ object AppCreateTenant extends mvc.Controller {
   val _newTenantPasswordHashLength = 12
 
 
-  def showWebsiteNameForm() = CheckSidActionNoBody {
-        (sidOk, xsrfOk, request) =>
-
-    val curTenantId = "?"
-    val ipAddr = request.remoteAddress
-    _throwIfMayNotCreateTenant(curTenantId, ipAddr, sidOk.roleId)
-
-    Ok(views.html.createTenant(doWhat = "showWebsiteNameForm"))
+  def showLoginForm() = ExceptionActionNoBody { request =>
+    Ok(views.html.createTenant(doWhat = "showLoginForm"))
   }
 
 
-  def handleWebsiteNameForm() = CheckSidAction(
+  def handleLoginForm() = ExceptionAction(
+        BodyParsers.parse.urlFormEncoded(maxLength = 1000)) {
+      implicit request =>
+
+    AppAuthOpenid.asyncLogin(
+      returnToUrl = routes.AppCreateTenant.showCreateWebsiteForm.absoluteURL())
+  }
+
+
+  def showCreateWebsiteForm() = CheckSidActionNoBody {
+        (sidOk, xsrfOk, request) =>
+
+    if (sidOk.roleId isEmpty)
+      throwRedirect(
+        routes.AppCreateTenant.showLoginForm().absoluteURL()(request))
+
+    val curTenantId = AppAuth.lookupTenantByHost(request.host)
+    val ipAddr = request.remoteAddress
+    _throwIfMayNotCreateTenant(curTenantId, ipAddr, sidOk.roleId)
+
+    Ok(views.html.createTenant(doWhat = "showCreateWebsiteForm",
+      xsrfToken = xsrfOk.value))
+  }
+
+
+  def handleCreateWebsiteForm() = CheckSidAction(
         BodyParsers.parse.urlFormEncoded(maxLength = 100)) {
         (sidOk, xsrfOk, request) =>
+
+    def redirectBackToLoginPage(errorCode: String, errorMessage: String) {
+      throwForbidden(errorCode, errorMessage) // for now
+    }
+
+    if (sidOk.roleId isEmpty) redirectBackToLoginPage(
+      "DwE013k586", "Cannot create website: Not logged in")
+
+    val curTenantId = AppAuth.lookupTenantByHost(request.host)
+    val ipAddr = request.remoteAddress
+    val dao = Debiki.tenantDao(curTenantId, ip = ipAddr, roleId = sidOk.roleId)
+
+    val (identity, user) = {
+      val loginId = sidOk.loginId.getOrElse(assErr("DwE01955"))
+      dao.loadIdtyAndUser(loginId) match {
+        case Some((identity, user)) => (identity, user)
+        case None =>
+          runErr("DwE01j920", "Cannot create website: Bad login ID: "+ loginId)
+      }
+    }
+
+    if (!user.isAuthenticated) redirectBackToLoginPage(
+      "DwE01B7", "Cannot create website: User not authenticated. "+
+      "Please do not login as guest")
+
+    if (user.email isEmpty) redirectBackToLoginPage(
+      "DwE56Yr5", "Cannot create website: User's email address unknown. " +
+      "Please use an account that has an email address")
 
     // SHOULD consume IP quota — but not tenant quota!? — when generating
     // new tenant ID. Don't consume tenant quota because the tenant
     // would be www.debiki.com?
 
-    val curTenantId = "?"
-    val ipAddr = request.remoteAddress
-    // val dao = Debiki.tenantDao(tenantId, ip = ipAddr, roleId = sidOk.roleId)
     _throwIfMayNotCreateTenant(curTenantId, ipAddr, roleIdOpt = sidOk.roleId)
 
-    // Don't save this new tenant id to database, until we've
-    // redirected to the new tenant id, and the tenant creator has logged in
-    // *with an identity we support* (e.g. OpenID or, in the future,
-    // Twitter or Facebook).
-    val newTenantId = "123abc"  // dao.nextTenantId()
-    val newTenantAddr = newTenantId +"."+ newTenantParentDomain
+    val newTenantId = "abc123" // dao.createNewTenant(curTenantId, user.id)
 
-    // Sign the next request, so no one but the current user can
-    // login to the new tenant and become its owner.
-    // (The browser won't include the session id cookie when it is
-    // redirected, because the redirect is to another host. So we need
-    // something in the URL I think.)
-    val passwordUnsigned = _generatePassword(newTenantId, ipAddr)
-    val passwordSigned = _signPassword(passwordUnsigned)
-
-    // We cannot (?) use Play's reverse routing here, because we're routing
-    // to another host.
-    var newTenantOrigin = "http://"+ newTenantAddr
-    if (newTenantPort nonEmpty) newTenantOrigin += ":"+ newTenantPort
-    Redirect(newTenantOrigin +"/-/new-tenant-login?password="+ passwordSigned)
+    Redirect(
+      routes.AppCreateTenant.tenantCreated(newTenantId).absoluteURL()(request))
   }
 
 
-  def showOwnerLoginForm(password: String) =
-        ExceptionActionNoBody { request =>
-
-    val newTenantId = "123abc"
-    val ipAddr = request.remoteAddress
-    _throwIfBadPassword(password, tenantId = newTenantId, ip = ipAddr)
-
-    val newPasswordUnsigned = _generatePassword(newTenantId, ipAddr)
-    val newPasswordSigned = _signPassword(newPasswordUnsigned)
-
-    Ok(views.html.createTenant(doWhat = "showOwnerLoginForm",
-      loginFormPassword = newPasswordSigned))
-  }
-
-
-  def handleOwnerLoginForm() = ExceptionAction(
-        BodyParsers.parse.urlFormEncoded(maxLength = 1000)) {
-        implicit request =>
-
-    val newTenantId = "123abc"
-    val ipAddr = request.remoteAddress
-    val password = request.body.getOrThrowBadReq("login-password")
-    _throwIfBadPassword(password, tenantId = newTenantId, ip = ipAddr)
-
-    val nextPageAfterLogin = routes.AppCreateTenant.welcomeOwner.absoluteURL()
-    AppAuthOpenid.asyncLogin(returnToUrl = nextPageAfterLogin)
-  }
-
-
-  def welcomeOwner() = ExceptionActionNoBody { request =>
-    Ok(views.html.createTenant(doWhat = "welcomeOwner"))
+  def tenantCreated(newTenantId: String) = CheckSidActionNoBody {
+        (sidOk, xsrfOk, request) =>
+    Ok(views.html.createTenant(doWhat = "welcomeOwner",
+      manageWebsiteUrl = AppManageTenant.urlToManage(newTenantId)(request)))
   }
 
 
@@ -152,3 +153,7 @@ object AppCreateTenant extends mvc.Controller {
   }
 
 }
+
+
+// vim: fdm=marker et ts=2 sw=2 tw=80 fo=tcqwn list
+

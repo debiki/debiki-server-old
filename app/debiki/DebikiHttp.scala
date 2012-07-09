@@ -79,6 +79,9 @@ object DebikiHttp {
     override def fillInStackTrace(): Throwable = this
   }
 
+  def throwRedirect(url: String) =
+    throw ResultException(R.Redirect(url))
+
   def throwBadReq(errCode: String, message: String = "") =
     throw ResultException(BadReqResult(errCode, message))
 
