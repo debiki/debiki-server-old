@@ -10,3 +10,6 @@
 [submodule "modules/debiki-spa-admin"]
 	path = modules/debiki-spa-admin
 	url = ../debiki-spa-admin.git
+[submodule "modules/debiki-spa-manage-websites"]
+	path = modules/debiki-spa-manage-websites
+	url = ../debiki-spa-manage-websites.git

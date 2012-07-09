@@ -24,6 +24,7 @@ POST  /-/create-website         controllers.AppCreateTenant.handleCreateWebsiteF
 GET   /-/created-website/id/:id controllers.AppCreateTenant.tenantCreated(id)
 
 GET   /-/admin/                 controllers.Assets.at(path = "/public/admin", file = "admin-page.html")
+GET   /-/manage-websites/       controllers.Assets.at(path = "/public/manage-websites", file = "index.html")
 GET   /-/*file                  controllers.Assets.at(path = "/public", file)
 
 
