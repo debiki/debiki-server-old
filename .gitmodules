@@ -7,3 +7,6 @@
 [submodule "modules/debiki-tck-dao"]
 	path = modules/debiki-tck-dao
 	url = ../debiki-tck-dao.git
+[submodule "modules/debiki-spa-admin"]
+	path = modules/debiki-spa-admin
+	url = ../debiki-spa-admin.git

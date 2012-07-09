@@ -23,6 +23,7 @@ GET   /-/create-website         controllers.AppCreateTenant.showCreateWebsiteFor
 POST  /-/create-website         controllers.AppCreateTenant.handleCreateWebsiteForm
 GET   /-/created-website/id/:id controllers.AppCreateTenant.tenantCreated(id)
 
+GET   /-/admin/                 controllers.Assets.at(path = "/public/admin", file = "admin-page.html")
 GET   /-/*file                  controllers.Assets.at(path = "/public", file)
 
 
