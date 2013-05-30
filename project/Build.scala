@@ -89,6 +89,11 @@ object ApplicationBuild extends Build {
 
 
   def mainSettings = List(
+    // Search for theme files in <debiki-server>/themes/views/themes/,
+    // which is a softlink to a /themes/ folder in the parent directory.
+    // (The parent dir is supposed to be another Git repo with *site
+    // specific* themes and config files and scripts.)
+    sourceDirectory in Compile <<= baseDirectory / "themes",
     scalaVersion := "2.10.1",
     compileRhinoTask := { "make compile_javascript"! },
     compileJsAndCss := { "grunt"! },
