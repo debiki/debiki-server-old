@@ -19,6 +19,12 @@
  * comments are shown. The boundaries of the viewport are outlined too.
  * If you click and drag in the minimap, you'll scroll the viewport.
  *
+ * The minimap scrollfixes itself in the upper right corner. I couldn't
+ * use any separate modular scroollfix directive for this, because
+ * the scrollfix functionality needs to know if the user is currently
+ * scrolling — then it's not a good idea to suddenly change the position
+ * of the underlying map?
+ *
  * Regrettably this code doesn't totally followed AngularJS best practises,
  * e.g. I'm using `document` directly.
  */
@@ -60,7 +66,6 @@ function dwMinimap ($window)
     <canvas
       id="dw-minimap"
       xx-ng-show="numComments > 0"
-      ui-scrollfix2d
       width="#minimapWidth"
       height="#minimapHeight"
       ng-mousedown="startScrolling($event)">
@@ -68,8 +73,15 @@ function dwMinimap ($window)
     """
 
   link: !(scope, elem, attrs) ->
-    canvas = elem.children('canvas')[0]
-    context = canvas.getContext '2d'
+    # Here we'll do 3 things:
+    # - Draw and update the minimap.
+    # - Handle mouse click and drag in the minimap — then move the viewport.
+    # - Scrollfix the minimap in the upper right corner.
+
+    # ----- Draw minimap
+
+    canvas = elem.children('canvas')
+    context = canvas[0].getContext '2d'
     context.fillStyle = '#666'
 
     # The article's .dw-p is very wide; use .dw-p-bd-blk instead.
@@ -82,6 +94,8 @@ function dwMinimap ($window)
       context.clearRect(0, 0, minimapWidth, minimapHeight)
       context.putImageData(cachedMinimap, 0, 0)
       drawViewport(context, minimapWidth, minimapHeight)
+
+    # ----- Handle click and drag in minimap
 
     isScrolling = false
 
@@ -104,12 +118,35 @@ function dwMinimap ($window)
     scope.scroll = ($event) ->
       if !isScrolling => return
       $event.preventDefault()
-      canvasOffset = $(canvas).offset!
+      canvasOffset = canvas.offset!
       docPosClickedX = ($event.pageX - canvasOffset.left) / minimapWidth * document.width
       docPosClickedY = ($event.pageY - canvasOffset.top) / minimapHeight * document.height
       newDocCornerX = docPosClickedX - window.innerWidth / 2
       newDocCornerY = docPosClickedY - window.innerHeight / 2
       window.scrollTo(newDocCornerX, newDocCornerY)
+
+    # ----- Scrollfix the minimap
+
+    # Adding 100 makes the minimap less jerky when scrolling mostly straight
+    # down (which is the first thing people tend to do), and also takes
+    # scrollbars into account.
+    scrollfixOffset =
+      x: canvas.offset!left + canvas.width! + 100
+      y: canvas.offset!top
+
+    angular.element($window).bind 'scroll', !->
+      # This (pageYOffset) won't work in IE8, but Canvas isn't supported in IE8
+      # anyway so this is dead code, in IE8.
+      offsetY = $window.pageYOffset;
+      offsetX = $window.pageXOffset;
+      offsetXRightEdge = offsetX + $window.innerWidth
+      if !(canvas.hasClass 'dw-scrollfix')
+        if offsetY > scrollfixOffset.y || offsetXRightEdge > scrollfixOffset.x
+          canvas.addClass 'dw-scrollfix'
+      else if canvas.hasClass 'dw-scrollfix'
+        if offsetY < scrollfixOffset.y && offsetXRightEdge < scrollfixOffset.x
+          canvas.removeClass 'dw-scrollfix'
+
 
 
 
