@@ -242,6 +242,8 @@ function renderPageEtc() {
 
   configureAjaxRequests();
 
+  d.i.setDynamicMaxPostWidth();
+
   var $posts = $('.debiki .dw-p:not(.dw-p-ttl)');
 
   // If there's no SVG support, use PNG arrow images instead.

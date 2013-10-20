@@ -16,9 +16,6 @@
  */
 
 
-
-(function() {
-
 var d = { i: debiki.internal, u: debiki.v0.util };
 var $ = d.i.$;
 
@@ -62,6 +59,36 @@ function $makeThreadEastResizable() {
 };
 
 
-})();
+
+/**
+ * Avoids posts that are almost as wide as the mobile phone's screen,
+ * because since Debiki's scrolling is 2D it's otherwise annoyingly easy to
+ * scroll the post's left/right edge off screen. — Other websites usually
+ * don't have horizontal scrolling at all, so for them it's not possible to
+ * scroll the text edge off screen.
+ */
+d.i.setDynamicMaxPostWidth = function() {
+  d.u.zoomListeners.push(updateMaxPostWidth);
+  updateMaxPostWidth();
+};
+
+
+
+function updateMaxPostWidth() {
+  var winWidth = $(window).width();
+  if (winWidth >= 768)
+    return;
+
+  var maxWidth = winWidth * 0.85 - 50;
+  $('.dw-p').css('max-width', maxWidth);
+
+  // Alternatively, could add a max width CSS rule and edit that rule itself,
+  // see e.g.:
+  //  http://stackoverflow.com/questions/730048/how-to-change-remove-css-classes-definitions-at-runtime
+  //  http://www.hunlock.com/blogs/Totally_Pwn_CSS_with_Javascript
+  //  http://stackoverflow.com/questions/9153718/change-the-style-of-an-entire-css-class-using-javascript
+};
+
+
 
 // vim: fdm=marker et ts=2 sw=2 tw=80 fo=tcqwn list
