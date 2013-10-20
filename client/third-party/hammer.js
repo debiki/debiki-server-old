@@ -1,0 +1,1 @@
+../../modules/hammer.js/dist/hammer.js

@@ -40,6 +40,7 @@ module.exports = function(grunt) {
       'client/third-party/bootstrap/tooltip.js', //
       'client/third-party/bootstrap/dropdown.js',
       'client/third-party/diff_match_patch.js',
+      'client/third-party/hammer.js',
       'client/third-party/html-sanitizer-bundle.js',
       'client/third-party/jquery-cookie.js',
       'client/third-party/jquery-scrollable.js', //
@@ -66,6 +67,7 @@ module.exports = function(grunt) {
       'target/client/page/scripts/debiki-diff-match-patch.js',
       'target/client/page/scripts/debiki-edit-history.js',
       'target/client/page/scripts/debiki-form-anims.js',
+      'target/client/page/scripts/debiki-gestures.js',
       'target/client/page/scripts/debiki-http-dialogs.js',
       'target/client/page/scripts/debiki-inline-threads.js',
       'target/client/page/scripts/debiki-jquery-dialogs.js',
@@ -105,6 +107,7 @@ module.exports = function(grunt) {
   var debikiTouchFiles = [
       'client/third-party/bootstrap/dropdown.js',
       'client/third-party/diff_match_patch.js',
+      'client/third-party/hammer.js',
       'client/third-party/html-sanitizer-bundle.js',
       'client/third-party/jquery-cookie.js',
       'client/third-party/livescript/prelude-browser.js',
@@ -131,6 +134,7 @@ module.exports = function(grunt) {
       'target/client/page/scripts/debiki-diff-match-patch.js',
       'target/client/page/scripts/debiki-edit-history.js',
       'target/client/page/scripts/debiki-form-anims.js',
+      'target/client/page/scripts/debiki-gestures.js',
       'target/client/page/scripts/debiki-http-dialogs.js',
       'target/client/page/scripts/debiki-inline-threads.js',
       'target/client/page/scripts/debiki-jquery-dialogs.js',

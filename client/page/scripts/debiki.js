@@ -279,6 +279,8 @@ function renderPageEtc() {
     d.i.initUtterscrollAndTips();
   }
 
+  d.i.enableSwipeGestures();
+
   d.i.makePostHeaderPretty($('.dw-ar-p-hd'));
 
   var steps = [];
@@ -366,6 +368,7 @@ function renderEmptyPage() {
     d.i.initKeybdShortcuts($);
     d.i.initUtterscrollAndTips();
   }
+  d.i.enableSwipeGestures();
   fireLoginOrLogout();
 };
 
