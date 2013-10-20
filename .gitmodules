@@ -22,3 +22,6 @@
 [submodule "modules/debiki-bootstrap"]
 	path = modules/debiki-bootstrap
 	url = git@github.com:debiki/debiki-bootstrap-stylus.git
+[submodule "modules/hammer.js"]
+	path = modules/hammer.js
+	url = https://github.com/EightMedia/hammer.js.git
