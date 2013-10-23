@@ -52,61 +52,47 @@ d.i.enableSwipeGestures = !->
 
   if Modernizr.touch
     hammer
-      .on('swiperight', handleSwipeRight)
-      .on('swipedown', handleSwipeDown)
+      .on('swiperight', handleSwipe)
+      .on('swipedown', handleSwipe)
   else
     # Invert for desktop
     hammer
-      .on('swipeleft', handleSwipeRight)
-      .on('swipeup', handleSwipeDown)
+      .on('swipeleft', handleSwipe)
+      .on('swipeup', handleSwipe)
 
 
 
 !function removeAnyShortcutbutton(event)
-  $('.dw-gesture-btn').remove()
+  $('.dw-gesture-btns-wrap').remove()
 
 
 
-!function handleSwipeRight(event)
-  [leftBtnPos, articleBtnPos] =
-    if Modernizr.touch => ['southeast', 'south']
-    else ['east', 'northeast']
-  makeShortcutButton(event, 'Left', leftBtnPos, scrollToLeftEdge)
-  makeShortcutButton(event, 'Article', articleBtnPos, scrollToArticle)
+!function handleSwipe(event)
+  makeShortcutButtons(event, [
+    ['Prev', scrollToPrevColumn],
+    ['Up', scrollToTopOfColumn],
+    ['Next', scrollToNextColumn],
+    ['_NewRow_'],
+    ['First', scrollToLeftEdge],
+    ['Last', scrollToRightEdge]])
 
 
 
-!function handleSwipeDown(event)
-  makeShortcutButton(event, 'Up', 'south', scrollToTopOfColumn)
-  makeShortcutButton(event, 'Next', 'southeast', scrollToNextColumn)
-  makeShortcutButton(event, 'Prev', 'southwest', scrollToPrevColumn)
-
-
-
-function makeShortcutButton(event, text, position, onClick)
-  button = $("""<a class="btn btn-default btn-lg dw-gesture-btn">#text</a>""")
-  $('body').append(button)
-  button.css(right: 0, bottom: 0)
-
-  buttonWidth = button.outerWidth!
-  buttonHeight = button.outerHeight!
-
-  # $(window).width() gives wrong result in my Andorid browser if zoomed in/out.
-  # This works however, both with my Android, and Chrome Desktop:
-  winWidth = button.offset!left - $(window).scrollLeft! + buttonWidth
-  winHeight = button.offset!top - $(window).scrollTop! + buttonHeight
-
-  [top, left] = switch position
-  | 'northeast' => [0,                              winWidth - buttonWidth      ]
-  | 'east'      => [(winHeight - buttonHeight) / 2, winWidth - buttonWidth      ]
-  | 'south'     => [winHeight - buttonHeight,       (winWidth - buttonWidth) / 2]
-  | 'southeast' => [winHeight - buttonHeight,       winWidth - buttonWidth      ]
-  | 'southwest' => [winHeight - buttonHeight,       0                           ]
-
-  button.css(top: top, left: left, right: 'auto', bottom: 'auto')
-  button.click !(event) ->
-    removeAnyShortcutbutton()
-    onClick(event)
+!function makeShortcutButtons(event, buttonTextsAndOnClicks)
+  buttonDivWrapper = $('<div class="dw-gesture-btns-wrap"></div>')
+  buttonDiv = $('<div class="dw-gesture-btns"></div>')
+  buttonDivWrapper.append(buttonDiv)
+  for buttonTextAndOnClick in buttonTextsAndOnClicks
+    let [text, onClick] = buttonTextAndOnClick
+      if text == '_NewRow_'
+        buttonDiv.append('<br>')
+      else
+        button = $("""<a class="btn btn-primary dw-gesture-btn">#text</a>""")
+        buttonDiv.append(button)
+        button.click !(event) ->
+          removeAnyShortcutbutton()
+          onClick(event)
+  $('body').append(buttonDivWrapper)
 
 
 
@@ -115,8 +101,9 @@ function makeShortcutButton(event, text, position, onClick)
 
 
 
-!function scrollToArticle
-  $('.dw-page').dwScrollIntoView(duration: 1600)
+!function scrollToRightEdge
+  # This attempts to scroll a little bit too much, that's ok.
+  $('html, body').animate({ 'scrollLeft': $(window).width! }, 1500, 'swing')
 
 
 

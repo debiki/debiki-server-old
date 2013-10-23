@@ -1485,12 +1485,23 @@ form .dw-ntf
 // Swipe gestures
 //===========================
 
-.dw-gesture-btn
+// Use 2 divs, one to fix the buttons at the bottom, and another to place them
+// in the middle, via text-align: center.
+
+.dw-gesture-btns-wrap
   position: fixed
-  padding: 25px 50px;
-  border-radius: 15px
+  left: 0
+  right: 0
+  bottom: 0
   // Above forms (1100)
   z-index: 1150
+
+.dw-gesture-btns
+  text-align: center
+
+.dw-gesture-btn
+  padding: 14px 30px;
+  border-radius: 12px
 
 
 
