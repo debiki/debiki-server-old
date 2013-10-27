@@ -122,7 +122,7 @@ function loginGuestDialogHtml
     <form class="dw-f">
       <div class="row">
 
-        <div class="col-sm-5">
+        <div class="col-sm-12">
           <div class="form-group">
             <p>Login with Gmail, OpenID, Yahoo, etcetera:</p>
             <a class="dw-a dw-a-login-openid btn btn-default" tabindex="101">Log in</a>
@@ -138,7 +138,7 @@ function loginGuestDialogHtml
         <br class="visible-xs">
         <br class="visible-xs">
 
-        <div class="col-sm-5 col-sm-offset-1">
+        <div class="col-sm-12">
           <p>Alternatively, login as guest:</p>
           <div class="form-group">
             <label for="dw-fi-lgi-name">Enter your name:</label><br>

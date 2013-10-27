@@ -37,6 +37,10 @@ import Utils.{OkHtml, OkXml}
 object Application extends mvc.Controller {
 
 
+  def brokenPage() = mvc.Action {
+    Ok(views.html.brokenPage().body) as HTML
+  }
+
   def handleRateForm(pathIn: PagePath, postId: ActionId)
         = PagePostAction(maxUrlEncFormBytes = 1000)(pathIn) { pageReq =>
 
