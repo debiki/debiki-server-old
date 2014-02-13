@@ -41,8 +41,8 @@
     <div ng-if="ctrl.forums.length > 0">
       Forums:
       <div ng-repeat="forum in ctrl.forums">
-        {{forum.anyTitle}}:
-        <a href="#/fourm/{{forum.id}}/">
+        <a href="#/fourm/{{forum.id}}/">{{forum.anyTitle}}:</a>
+        <a href="#/fourm/{{forum.id}}/dashboard">
           <input type="button" value="Dashboard">
         </a>
         <a href="#/fourm/{{forum.id}}/recent-comments">

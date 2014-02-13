@@ -6,6 +6,7 @@ class DebikiAdminRouteInitializer implements RouteInitializer {
 
 
   init(Router router, ViewFactory view) {
+    RouteEvent lastForumRouteEvent;
     router.root
       ..addRoute(
           name: 'allRecentTopics',
@@ -53,20 +54,38 @@ class DebikiAdminRouteInitializer implements RouteInitializer {
                 enter: view('view/blog/dashboard.html')))
       ..addRoute(
           name: 'forum',
-          path: '/fourm/:forumId/',
+          path: '/fourm/:forumId',
           mount: (Route route) => route
             ..addRoute(
                 name: 'forumComments',
-                path: 'recent-comments',
-                enter: view('view/forum/recent-comments.html'))
+                path: '/recent-comments',
+                enter: (RouteEvent routeEvent) {
+                  lastForumRouteEvent = routeEvent;
+                  return view('view/forum/recent-comments.html')(routeEvent);
+                })
             ..addRoute(
                 name: 'forumSettings',
-                path: 'settings',
-                enter: view('view/forum/settings.html'))
+                path: '/settings',
+                enter: (RouteEvent routeEvent) {
+                  lastForumRouteEvent = routeEvent;
+                  return view('view/forum/settings.html')(routeEvent);
+                })
             ..addRoute(
                 name: 'forumDashboard',
-                path: '',
-                enter: view('view/forum/dashboard.html')))
+                path: '/dashboard',
+                enter: (RouteEvent routeEvent) {
+                  lastForumRouteEvent = routeEvent;
+                  return view('view/forum/dashboard.html')(routeEvent);
+                })
+            ..addRoute(
+                name: 'forumLastRoute',
+                path: '/',
+                enter: (_) {
+                  print('Entered `forumLastRoute`');
+                  router.go(lastForumRouteEvent.route.name,
+                      lastForumRouteEvent.parameters,
+                      startingFrom: route, replace: true);
+                }))
       ..addRoute(
           name: 'mainDashboard',
           path: '/',
