@@ -24,6 +24,8 @@ import debiki.DebikiHttp._
 import play.api._
 import play.api.libs.json._
 import play.api.libs.json.util._
+import scala.concurrent.Future
+
 
 
 /**
@@ -71,7 +73,7 @@ object PageMetaController extends mvc.Controller {
         apiReq.dao.updatePageMeta(newMeta, old = curMeta)
     }
 
-    Ok
+    Future.successful(Ok)
   }
 
   /* How do I use Play 2.1's Json stuff??

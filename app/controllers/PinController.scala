@@ -26,6 +26,8 @@ import debiki.DebikiHttp._
 import java.{util => ju}
 import play.api._
 import play.api.libs.json.JsObject
+import scala.concurrent.Future
+
 
 
 
@@ -57,7 +59,7 @@ object PinController extends mvc.Controller {
     }
 
     // The client already knows where to place the pinned post, so simply:
-    Ok
+    Future.successful(Ok)
   }
 
 }

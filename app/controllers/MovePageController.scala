@@ -24,11 +24,13 @@ import com.debiki.core.Prelude._
 import debiki._
 import debiki.DebikiHttp._
 import play.api._
-import play.api.mvc.{Action => _}
+import play.api.mvc._
 import play.api.libs.json.Json.toJson
 import requests._
+import scala.concurrent.Future
 import Utils.OkSafeJson
 import Utils.ValidationImplicits._
+
 
 
 /**
@@ -88,12 +90,14 @@ object MovePageController extends mvc.Controller {
       anyShowId = anyShowId, pushExistingPage = pushExistingPage)
 
     anyPushedPagePath match {
-      case None => Ok
+      case None =>
+        Future.successful(Ok)
       case Some(pushedPagePath) =>
         // The Admin SPA needs to know that [a page other than the one we
         // wanted to move] has been moved.
-        OkSafeJson(toJson(Map(
-          "pagePushedToPrevLoc" -> ListController.jsonForPath(pushedPagePath))))
+        Future.successful(OkSafeJson(
+          toJson(Map(
+            "pagePushedToPrevLoc" -> ListController.jsonForPath(pushedPagePath)))))
     }
   }
 
@@ -151,12 +155,12 @@ object MovePageController extends mvc.Controller {
 
 
   private def _moveRenameGetImpl(pageReq: PageGetRequest, movePage: Boolean)
-        : mvc.SimpleResult = {
+        : Future[SimpleResult] = {
 
     if (!pageReq.permsOnPage.moveRenamePage)
       throwForbidden("DwE35Rk15", "You may not move or rename this page.")
 
-    if (movePage == true) {
+    val result = if (movePage == true) {
       val newFolder: String =
         pageReq.queryString.getEmptyAsNone("to-folder").getOrElse("/")
 
@@ -190,6 +194,7 @@ object MovePageController extends mvc.Controller {
       Ok(views.html.moveRenamePage(pageReq.xsrfToken.value,
         newSlug = newSlug, changeShowId = changeShowId))
     }
+    Future.successful(result)
   }
 
 
@@ -216,7 +221,7 @@ object MovePageController extends mvc.Controller {
 
   def _moveRenamePostImpl(pageReq: PagePostRequest,
         newFolder: Option[String] = None, showId: Option[Boolean] = None,
-        newSlug: Option[String] = None): mvc.SimpleResult = {
+        newSlug: Option[String] = None): Future[SimpleResult] = {
 
     if (!pageReq.permsOnPage.moveRenamePage)
       throwForbidden("DwE0kI35", "You may not move or rename this page.")
@@ -232,7 +237,8 @@ object MovePageController extends mvc.Controller {
       pageReq.pageId_!, newFolder = newFolder,
       showId = showId, newSlug = newSlug)
 
-    SeeOther(newPagePath.value)
+    Future.successful(
+      SeeOther(newPagePath.value))
   }
 
 }

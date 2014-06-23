@@ -25,6 +25,8 @@ import debiki.DebikiHttp._
 import java.{util => ju}
 import play.api._
 import play.api.libs.json.JsObject
+import scala.concurrent.Future
+
 
 
 /** Intended for troubleshooting, via the browser.
@@ -40,7 +42,7 @@ object DebugController extends mvc.Controller {
       throwForbidden("DwE7dBF03", "Only for admins")
 
     val result = debiki.AutoApprover.perhapsApproveImpl(request.dao, ipAddress, identityId)
-    Ok(result.toString)
+    Future.successful(Ok(result.toString))
   }
 
 }

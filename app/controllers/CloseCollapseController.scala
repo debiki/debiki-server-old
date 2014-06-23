@@ -26,7 +26,9 @@ import debiki.DebikiHttp._
 import java.{util => ju}
 import play.api._
 import play.api.libs.json._
+import play.api.mvc.SimpleResult
 import requests.JsonPostRequest
+import scala.concurrent.Future
 import Utils.ValidationImplicits._
 import BrowserPagePatcher.TreePatchSpec
 
@@ -52,7 +54,7 @@ object CloseCollapseController extends mvc.Controller {
 
 
   private def closeOrReopenTree(apiReq: JsonPostRequest, payload: PostActionPayload)
-        : mvc.SimpleResult = {
+        : Future[SimpleResult] = {
 
     if (!apiReq.user_!.isAdmin)
       throwForbidden("DwE95Xf2", "Insufficient permissions to close and reopen threads")
@@ -78,8 +80,8 @@ object CloseCollapseController extends mvc.Controller {
       pagesAndPatchSpecs ::= (pageWithNewActions.parts, patchSpecs)
     }
 
-    OkSafeJson(
-      BrowserPagePatcher(apiReq).jsonForTrees(pagesAndPatchSpecs))
+    Future.successful(OkSafeJson(
+      BrowserPagePatcher(apiReq).jsonForTrees(pagesAndPatchSpecs)))
   }
 
 }

@@ -28,6 +28,7 @@ import play.api.mvc.{Action => _, _}
 import requests.ApiRequest
 import actions.ApiActions.JsonOrFormDataPostAction
 import play.api.libs.json.JsObject
+import scala.concurrent.Future
 
 
 
@@ -51,7 +52,7 @@ object LoginWithPasswordController extends mvc.Controller {
       case Some(url) => Redirect(url)
     }
 
-    response.withCookies(cookies: _*)
+    Future.successful(response.withCookies(cookies: _*))
   }
 
 

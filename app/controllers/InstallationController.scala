@@ -19,7 +19,7 @@ package controllers
 
 import actions.ApiActions._
 import actions.PageActions._
-import actions.SafeActions.{ExceptionAction, ExceptionActionNoBody}
+import actions.SafeActions.ExceptionAction
 import com.debiki.core._
 import com.debiki.core.Prelude._
 import debiki._
@@ -28,6 +28,8 @@ import debiki.dao.ConfigValueDao
 import java.{util => ju}
 import play.api._
 import play.api.libs.json._
+import play.api.mvc.BodyParsers.parse.empty
+import scala.concurrent.Future
 
 
 
@@ -58,7 +60,7 @@ object InstallationController extends mvc.Controller {
   private val FirstSitePasswordCookieName = "dwCoFirstSitePswd"
 
 
-  def viewInstallationPage() = ExceptionActionNoBody { request =>
+  def viewInstallationPage() = ExceptionAction(empty) { request =>
     Globals.systemDao.checkInstallationStatus() match {
       case InstallationStatus.CreateFirstSite =>
         showPasswordInputLogPassword(request)
@@ -70,17 +72,18 @@ object InstallationController extends mvc.Controller {
         val xsrfToken = nextRandomString() take 20
         val xsrfCookie = urlEncodeCookie(DebikiSecurity.XsrfCookieName, xsrfToken)
 
-        Ok(views.html.login.loginPage(xsrfToken = xsrfToken,
+        Future.successful(Ok(views.html.login.loginPage(
+          xsrfToken = xsrfToken,
           returnToUrl =
             routes.InstallationController.createFirstSiteOwner(firstSiteOwnerPassword).url,
           showCreateAccountOption = true,
           title = "Installation",
           message = Some("The website needs an administrator."),
           providerLoginMessage = "That account will become the website owner account."))
-          .withCookies(xsrfCookie)
+          .withCookies(xsrfCookie))
 
       case InstallationStatus.AllDone =>
-        OkAllDone(request.host)
+        Future.successful(OkAllDone(request.host))
     }
   }
 
@@ -91,7 +94,8 @@ object InstallationController extends mvc.Controller {
       |The installation password:  $firstSitePassword
       |==============================================
       """)
-    Ok(views.html.install.createFirstSite(request.host).body) as HTML
+    Future.successful(Ok(
+      views.html.install.createFirstSite(request.host).body) as HTML)
   }
 
 
@@ -104,7 +108,7 @@ object InstallationController extends mvc.Controller {
     // When we reply OK, a related AngularJS app will reload the page, and
     // viewInstallationPage() (just above) will be called again, and notice that
     // now a site has been created.
-    Ok.withCookies(passCookie)
+    Future.successful(Ok.withCookies(passCookie))
   }
 
 
@@ -156,7 +160,7 @@ object InstallationController extends mvc.Controller {
     apiReq.dao.configRole(apiReq.loginId_!, apiReq.ctime, roleId = apiReq.user_!.id,
       isAdmin = Some(true), isOwner = Some(true), emailNotfPrefs = Some(EmailNotfPrefs.Receive))
 
-    OkAllDone(apiReq.host)
+    Future.successful(OkAllDone(apiReq.host))
   }
 
 

@@ -24,6 +24,7 @@ import debiki._
 import debiki.DebikiHttp._
 import java.{util => ju}
 import play.api._
+import scala.concurrent.Future
 import Prelude._
 import BrowserPagePatcher.TreePatchSpec
 
@@ -60,7 +61,8 @@ object LoadPagePartsController extends mvc.Controller {
       postIdsAndPages :+= (postIds, page)
     }
 
-    OkSafeJson(BrowserPagePatcher(apiReq).jsonForPosts(postIdsAndPages))
+    Future.successful(OkSafeJson(
+      BrowserPagePatcher(apiReq).jsonForPosts(postIdsAndPages)))
   }
 
 
@@ -121,8 +123,8 @@ object LoadPagePartsController extends mvc.Controller {
       pagesAndPatchSpecs ::= (page, postIdsToLoad)
     }
 
-    OkSafeJson(
-      BrowserPagePatcher(apiReq).jsonForTrees(pagesAndPatchSpecs))
+    Future.successful(OkSafeJson(
+      BrowserPagePatcher(apiReq).jsonForTrees(pagesAndPatchSpecs)))
   }
 
 }

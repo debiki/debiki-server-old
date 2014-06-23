@@ -27,10 +27,11 @@ import debiki.dao.SiteDao
 import java.{util => ju}
 import play.api._
 import play.api.mvc.{Action => _, _}
+import play.api.mvc.BodyParsers.parse.empty
 import play.api.Play.current
+import scala.concurrent.Future
 import requests._
 import Utils.ValidationImplicits._
-
 
 /** Creates new websites, including a homepage and a _site.conf page.
   */
@@ -64,13 +65,13 @@ object CreateSiteController extends mvc.Controller {
   }
 
 
-  def showWebsiteOwnerForm(siteType: String) = CheckSidActionNoBody {
+  def showWebsiteOwnerForm(siteType: String) = CheckSidAction(empty) {
         (sidOk, xsrfOk, browserId, request) =>
-    Ok(views.html.login.loginPage(xsrfToken = xsrfOk.value,
+    Future.successful(Ok(views.html.login.loginPage(xsrfToken = xsrfOk.value,
       returnToUrl = routes.CreateSiteController.showSiteTypeForm(siteType).url,
       title = "Choose Website Owner Account",
       providerLoginMessage = "It will become the owner of the new website.",
-      showCreateAccountOption = true))
+      showCreateAccountOption = true)))
   }
 
 
@@ -78,11 +79,13 @@ object CreateSiteController extends mvc.Controller {
     _throwIfMayNotCreateWebsite(request)
     if (siteType.nonEmpty) {
       // We already know what kind of site to create; skip this step.
-      Redirect(routes.CreateSiteController.showWebsiteNameForm(siteType))
+      Future.successful(Redirect(
+        routes.CreateSiteController.showWebsiteNameForm(siteType)))
     }
     else {
       val tpi = InternalTemplateProgrammingInterface(request.dao)
-      Ok(views.html.createsite.chooseType(tpi, xsrfToken = request.xsrfToken.value))
+      Future.successful(Ok(
+        views.html.createsite.chooseType(tpi, xsrfToken = request.xsrfToken.value)))
     }
   }
 
@@ -93,14 +96,16 @@ object CreateSiteController extends mvc.Controller {
         throwBadReq("DwE73Gb81", "Please specify site type")
     // Check that type can be parsed.
     parseSiteTypeOrThrow(siteType)
-    Redirect(routes.CreateSiteController.showWebsiteNameForm(siteType))
+    Future.successful(Redirect(
+      routes.CreateSiteController.showWebsiteNameForm(siteType)))
   }
 
 
   def showWebsiteNameForm(siteType: String) = GetAction { request =>
     _throwIfMayNotCreateWebsite(request)
     val tpi = InternalTemplateProgrammingInterface(request.dao)
-    Ok(views.html.createsite.chooseName(tpi, siteType, xsrfToken = request.xsrfToken.value))
+    Future.successful(Ok(
+      views.html.createsite.chooseName(tpi, siteType, xsrfToken = request.xsrfToken.value)))
   }
 
 
@@ -193,18 +198,18 @@ object CreateSiteController extends mvc.Controller {
         Ok(views.html.createsite.failNotFirst(siteType))
     }
 
-    result
+    Future.successful(result)
   }
 
 
-  def welcomeOwner() = CheckSidActionNoBody { (sidOk, xsrfOk, browserId, request) =>
+  def welcomeOwner() = CheckSidAction(empty) { (sidOk, xsrfOk, browserId, request) =>
     // SHOULD log in user, so s/he can create pages or choose a template.
     // Like so? Pass a magic token in the URL, which is valid for 1 minute,
     // and then, here, check if DW1_LOGINS has *no logins* for the new websitew
     // Then, if the URL token is valid, auto-login the user
     // because s/he is the owner and this'll work *once* only. (Assuming
     // we're using HTTPS (which we aren't), i.e. no man in the middle attack.)
-    Ok(views.html.createsite.welcomeOwner())
+    Future.successful(Ok(views.html.createsite.welcomeOwner()))
   }
 
 

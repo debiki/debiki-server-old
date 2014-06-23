@@ -27,6 +27,7 @@ import play.api.mvc
 import play.api.libs.json._
 import play.api.mvc.{Action => _, _}
 import requests.GetRequest
+import scala.concurrent.Future
 import Utils.OkSafeJson
 import Utils.ValidationImplicits._
 import DebikiHttp.throwBadReq
@@ -46,7 +47,7 @@ object ForumController extends mvc.Controller {
       request.dao.listTopicsInTree(rootPageId = categoryId, orderOffset, limit = NumTopicsToList)
     val topicsJson: Seq[JsObject] = topics.map(topicToJson(_))
     val json = Json.obj("topics" -> topicsJson)
-    OkSafeJson(json)
+    Future.successful(OkSafeJson(json))
   }
 
 
@@ -74,7 +75,7 @@ object ForumController extends mvc.Controller {
         summariesByCategoryId(category.id))
     }))
 
-    OkSafeJson(json)
+    Future.successful(OkSafeJson(json))
   }
 
 

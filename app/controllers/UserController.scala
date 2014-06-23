@@ -27,6 +27,7 @@ import play.api.mvc
 import play.api.libs.json._
 import play.api.mvc.{Action => _, _}
 import requests.GetRequest
+import scala.concurrent.Future
 import Utils.OkSafeJson
 import Utils.ValidationImplicits._
 import DebikiHttp.{throwBadReq, throwNotFound}
@@ -44,7 +45,8 @@ object UserController extends mvc.Controller {
       theme = TemplateRenderer.DefaultThemeFullName,
       template = "users",
       arguments = Seq(SiteTpi(request)))
-    Ok(htmlStr) as HTML
+    Future.successful(
+      Ok(htmlStr) as HTML)
   }
 
 
@@ -52,14 +54,16 @@ object UserController extends mvc.Controller {
     val userInfo = request.dao.loadUserInfoAndStats(userId) getOrElse throwNotFound(
       "DwE512WR8", s"User not found, id: $userId")
     val json = Json.obj("userInfo" -> userInfoToJson(userInfo))
-    OkSafeJson(json)
+    Future.successful(
+      OkSafeJson(json))
   }
 
 
   def listUserActions(userId: String) = GetAction { request =>
     val actionInfos: Seq[UserActionInfo] = request.dao.listUserActions(userId)
     val json = Json.obj("actions" -> actionInfos.map(actionToJson(_)))
-    OkSafeJson(json)
+    Future.successful(
+      OkSafeJson(json))
   }
 
 

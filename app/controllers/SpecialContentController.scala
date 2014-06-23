@@ -31,6 +31,7 @@ import play.api.data._
 import play.api.data.Forms._
 import play.api.mvc.{Action => _, _}
 import requests._
+import scala.concurrent.Future
 import scala.collection.{mutable => mut}
 import Utils.{OkSafeJson, OkHtml, Passhasher, parseIntOrThrowBadReq}
 import Utils.ValidationImplicits._
@@ -72,7 +73,7 @@ object SpecialContentController extends mvc.Controller {
       }
     }
 
-    OkSafeJson(json)
+    Future.successful(OkSafeJson(json))
   }
 
 
@@ -122,7 +123,7 @@ object SpecialContentController extends mvc.Controller {
     }
 
     updatePage(request, pageId, newText)
-    Ok
+    Future.successful(Ok)
   }
 
 

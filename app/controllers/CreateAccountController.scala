@@ -27,6 +27,8 @@ import java.{util => ju}
 import play.api._
 import play.api.mvc.{Action => _, _}
 import requests.ApiRequest
+import scala.concurrent.Future
+
 
 
 /** Creates email/password accounts. When the account has been created,
@@ -40,8 +42,9 @@ object CreateAccountController extends mvc.Controller {
 
   def showCreateAccountPage(returnToUrl: String) = GetAction { request =>
     throwIfMayNotCreateAccount(request)
-    Ok(views.html.createaccount.specifyEmailAddress(
-      xsrfToken = request.xsrfToken.value, returnToUrl = returnToUrl))
+    Future.successful(Ok(
+      views.html.createaccount.specifyEmailAddress(
+        xsrfToken = request.xsrfToken.value, returnToUrl = returnToUrl)))
   }
 
 
@@ -78,15 +81,17 @@ object CreateAccountController extends mvc.Controller {
     Globals.sendEmail(email, request.dao.siteId)
 
     // Ooops ought to redirect, then get, so reloading the page becomes harmless?
-    Ok(views.html.createaccount.registrationEmailSent())
+    Future.successful(Ok(
+      views.html.createaccount.registrationEmailSent()))
   }
 
 
   def showUserDetailsPage(emailId: String, returnToUrl: String) = GetAction { request =>
     loadAndCheckVerificationEmail(emailId, request)
     // (Note that account might already exist. If so, unique key should prevent dupl account.)
-    Ok(views.html.createaccount.userDetails(
-      xsrfToken = request.xsrfToken.value, emailId = emailId, returnToUrl = returnToUrl))
+    Future.successful(Ok(
+      views.html.createaccount.userDetails(
+        xsrfToken = request.xsrfToken.value, emailId = emailId, returnToUrl = returnToUrl)))
   }
 
 
@@ -113,13 +118,15 @@ object CreateAccountController extends mvc.Controller {
     val cookies = controllers.LoginWithPasswordController.doLogin(
       request, request.dao, email.sentTo, password)
 
-    Redirect(routes.CreateAccountController.showWelcomePage(returnToUrl)).withCookies(cookies: _*)
+    Future.successful(Redirect(
+      routes.CreateAccountController.showWelcomePage(returnToUrl)).withCookies(cookies: _*))
   }
 
 
   def showWelcomePage(returnToUrl: String) = GetAction { request =>
     request.user_! // verifies user is logged in
-    Ok(views.html.createaccount.welcomePage(returnToUrl))
+    Future.successful(Ok(
+      views.html.createaccount.welcomePage(returnToUrl)))
   }
 
 

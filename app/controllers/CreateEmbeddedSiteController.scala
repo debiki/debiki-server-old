@@ -27,7 +27,8 @@ import java.{util => ju}
 import play.api._
 import play.api.mvc.{Action => _, _}
 import play.api.Logger.logger
-import requests._
+import play.api.mvc.BodyParsers.parse.empty
+import scala.concurrent.Future
 import Utils.ValidationImplicits._
 
 
@@ -55,19 +56,20 @@ object CreateEmbeddedSiteController extends mvc.Controller {
   }
 
 
-  def showSiteOwnerForm() = CheckSidActionNoBody { (sidOk, xsrfOk, browserId, request) =>
-    Ok(views.html.login.loginPage(xsrfToken = xsrfOk.value,
+  def showSiteOwnerForm() = CheckSidAction(empty) { (sidOk, xsrfOk, browserId, request) =>
+    Future.successful(Ok(views.html.login.loginPage(
+      xsrfToken = xsrfOk.value,
       returnToUrl = routes.CreateEmbeddedSiteController.showEmbeddingSiteUrlForm.url,
       title = "Choose Website Owner Account",
       providerLoginMessage = "It will become the owner of the embedded discussions.",
-      showCreateAccountOption = true))
+      showCreateAccountOption = true)))
   }
 
 
   def showEmbeddingSiteUrlForm() = GetAction { request =>
     val tpi = InternalTemplateProgrammingInterface(request.dao)
-    Ok(views.html.createembeddedsite.specifyEmbeddingSiteUrl(
-      tpi, xsrfToken = request.xsrfToken.value))
+    Future.successful(Ok(views.html.createembeddedsite.specifyEmbeddingSiteUrl(
+      tpi, xsrfToken = request.xsrfToken.value)))
   }
 
 
@@ -82,9 +84,10 @@ object CreateEmbeddedSiteController extends mvc.Controller {
       throwForbidden(
         "DwE20GJ5", "You need to accept the Terms of Use and the Privacy Policy.")
 
-    Redirect(routes.CreateEmbeddedSiteController.tryCreateEmbeddedSite.url)
+    Future.successful(
+      Redirect(routes.CreateEmbeddedSiteController.tryCreateEmbeddedSite.url)
        .withSession(
-          request.session + ("embeddingSiteUrl" -> embeddingSiteUrl))
+          request.session + ("embeddingSiteUrl" -> embeddingSiteUrl)))
   }
 
 
@@ -149,21 +152,24 @@ object CreateEmbeddedSiteController extends mvc.Controller {
            they have no names""")
 
     val hostname = hostnameToEmbeddedSite(site.id)
-    Redirect(s"http://$hostname${routes.CreateEmbeddedSiteController.welcomeOwner.url}")
-      .withSession(request.session - "embeddingSiteUrl")
+    Future.successful(
+      Redirect(s"http://$hostname${routes.CreateEmbeddedSiteController.welcomeOwner.url}")
+      .withSession(request.session - "embeddingSiteUrl"))
   }
 
 
   def welcomeOwner() = GetAction { request =>
     // (See comment about automatic login to new site, in CreateSiteController.welcomeOwner())
     val site = request.dao.loadSite()
-    Ok(views.html.createembeddedsite.welcomeOwner(site))
+    Future.successful(
+      Ok(views.html.createembeddedsite.welcomeOwner(site)))
   }
 
 
   def embeddingSiteInstructionsPage() = GetAction { request =>
     val site = request.dao.loadSite()
-    Ok(views.html.createembeddedsite.embeddingSiteInstructionsPage(site))
+    Future.successful(
+      Ok(views.html.createembeddedsite.embeddingSiteInstructionsPage(site)))
   }
 
 }

@@ -29,6 +29,7 @@ import play.api.libs.json._
 import play.api.libs.json.Json.toJson
 import play.api.mvc.{Action => _, _}
 import requests.DebikiRequest
+import scala.concurrent.Future
 import xml.{Node, NodeSeq}
 import DebikiHttp._
 import Utils.ValidationImplicits._
@@ -85,9 +86,11 @@ object ListController extends mvc.Controller {
     contentType match {
       case DebikiHttp.ContentType.Html =>
         val pageNode = renderPageListHtml(pathsAndDetails)
-        OkHtml(<html><body>{pageNode}</body></html>)
+        Future.successful(OkHtml(
+          <html><body>{pageNode}</body></html>))
       case DebikiHttp.ContentType.Json =>
-        OkSafeJson(toJson(Map("pages" -> pathsAndDetails.map(jsonForPathAndMeta(_)))))
+        Future.successful(OkSafeJson(
+          toJson(Map("pages" -> pathsAndDetails.map(jsonForPathAndMeta(_))))))
     }
   }
 
@@ -139,16 +142,16 @@ object ListController extends mvc.Controller {
       throwForbidden("DwE71FKZ0", "Insufficient permissions to list users")
     }
     val usersAndIdEndpoints = request.dao.listUsers(UserQuery())
-    OkSafeJson(toJson(Map("users" -> (
+    Future.successful(OkSafeJson(toJson(Map("users" -> (
       usersAndIdEndpoints map { case (user, identityEndpoints) =>
         jsonForUser(user)
-      }))))
+      })))))
   }
 
 
   def listIps(pathIn: PagePath, contentType: DebikiHttp.ContentType) =
         PageGetAction(pathIn, pageMustExist = false) { pageReq =>
-    Ok
+    Future.successful(Ok)
   }
 
 

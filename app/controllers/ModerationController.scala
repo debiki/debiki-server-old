@@ -29,6 +29,8 @@ import play.api.libs.json._
 import play.api.libs.json.Json.toJson
 import play.api.mvc.{Action => _, _}
 import requests._
+import scala.concurrent.Future
+
 
 
 /** Lists posts for the moderation page, and approves/rejects/deletes posts
@@ -78,7 +80,7 @@ object ModerationController extends mvc.Controller {
 
 
   private def review2[A](apiReq: JsonPostRequest, payload: A, permsTest: (PermsOnPage) => Boolean)
-        : mvc.SimpleResult = {
+        : Future[SimpleResult] = {
     val pageIdsAndActions: Seq[(PageId, RawPostAction[A])] =
       for (postIdJson <- apiReq.body.as[Vector[JsObject]]) yield {
         val pageId = (postIdJson \ "pageId").as[PageId]
@@ -99,7 +101,7 @@ object ModerationController extends mvc.Controller {
     }
 
     // The client already knows how to update the page on status 200 OK.
-    Ok
+    Future.successful(Ok)
   }
 
 
@@ -137,7 +139,7 @@ object ModerationController extends mvc.Controller {
 
     val pageMetaByPageId = request.dao.loadPageMetasAsMap(posts.map(_.pageParts.pageId).distinct)
 
-    OkSafeJson(toJson(Map(
+    Future.successful(OkSafeJson(toJson(Map(
       "actions" -> JsArray(posts.map(jsonForPost(
           _, pageMetaByPageId, flagsByPostId, flaggers))),
       "postTextLengthLimit" -> JsNumber(PostTextLengthLimit),
@@ -145,7 +147,7 @@ object ModerationController extends mvc.Controller {
       // by folder path and by page id. see
       //   RdbSiteDao.loadRecentActionExcerpts(),
       // which does a `(select ... limit ...) union (select ... limit ...)`.
-      "actionCountApproxLimit" -> JsNumber(ActionCountLimit))))
+      "actionCountApproxLimit" -> JsNumber(ActionCountLimit)))))
   }
 
 

@@ -24,8 +24,9 @@ import com.debiki.core.Prelude._
 import debiki._
 import debiki.DebikiHttp._
 import play.api._
-import play.api.mvc.{Action => _}
+import play.api.mvc._
 import requests.{DebikiRequest, JsonPostRequest}
+import scala.concurrent.Future
 import Utils.ValidationImplicits._
 import EmailNotfPrefs.EmailNotfPrefs
 
@@ -82,7 +83,7 @@ object ConfigUserController extends mvc.Controller {
 
   private def configRoleUpdCookies(pageReq: DebikiRequest[_],
         emailNotfPrefs: EmailNotfPrefs, newEmailAddr: Option[String])
-        : mvc.SimpleResult = {
+        : Future[SimpleResult] = {
 
     val (user, loginId) = (pageReq.user_!, pageReq.loginId_!)
     require(user.isAuthenticated)
@@ -107,13 +108,14 @@ object ConfigUserController extends mvc.Controller {
     }
 
     val userNewPrefs = user.copy(emailNotfPrefs = emailNotfPrefs)
-    Ok.withCookies(userConfigCookie(pageReq.identity_!, userNewPrefs))
+    Future.successful(
+      Ok.withCookies(userConfigCookie(pageReq.identity_!, userNewPrefs)))
   }
 
 
   private def configGuestUpdCookies(pageReq: DebikiRequest[_],
         emailNotfPrefs: EmailNotfPrefs, newEmailAddr: Option[String])
-        : mvc.SimpleResult = {
+        : Future[SimpleResult] = {
     require(!pageReq.user_!.isAuthenticated)
 
     // Login again, if new email specified, because the email is part of the
@@ -146,7 +148,8 @@ object ConfigUserController extends mvc.Controller {
 
     val userNewPrefs = user.copy(emailNotfPrefs = emailNotfPrefs)
     val configCookie = userConfigCookie(pageReq.identity_!, userNewPrefs)
-    Ok.withCookies(configCookie::newSessCookies.toList: _*)
+    Future.successful(
+      Ok.withCookies(configCookie::newSessCookies.toList: _*))
   }
 
 

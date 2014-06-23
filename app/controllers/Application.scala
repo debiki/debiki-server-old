@@ -27,7 +27,9 @@ import java.{util => ju, io => jio}
 import play.api._
 import play.api.mvc.{Action => _, _}
 import play.api.Play.current
+import play.api.mvc.BodyParsers.parse.empty
 import requests.PageRequest
+import scala.concurrent.Future
 import DebikiHttp._
 import Utils.ValidationImplicits._
 import Utils.{OkHtml, OkXml}
@@ -72,7 +74,7 @@ object Application extends mvc.Controller {
       request.dao.savePageActionsGenNotfs(pageReq, flag::Nil) // anyPrelApprovalCancellation)
 
     val json = BrowserPagePatcher(pageReq).jsonForPost(postId, updatedPage.parts)
-    OkSafeJson(json)
+    Future.successful(OkSafeJson(json))
   }
 
 
@@ -112,7 +114,7 @@ object Application extends mvc.Controller {
     val json = BrowserPagePatcher(pageReq, showStubsForDeleted = true).jsonForTrees(
       page.parts, BrowserPagePatcher.TreePatchSpec(postId, wholeTree = wholeTree))
 
-    Utils.OkSafeJson(json)
+    Future.successful(Utils.OkSafeJson(json))
   }
 
 
@@ -172,7 +174,7 @@ object Application extends mvc.Controller {
       feedUpdated = mostRecentPageCtime,
       pathsAndPages)
 
-    OkXml(feedXml, "application/atom+xml")
+    Future.successful(OkXml(feedXml, "application/atom+xml"))
   }
 
 }

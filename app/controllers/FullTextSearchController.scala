@@ -38,24 +38,24 @@ object FullTextSearchController extends mvc.Controller {
   private val SearchResultsTemplate = "searchResults"
 
 
-  def searchWholeSiteFor(phrase: String) = AsyncGetAction { apiReq =>
+  def searchWholeSiteFor(phrase: String) = GetAction { apiReq =>
     searchImpl(phrase, anyRootPageId = None, apiReq)
   }
 
 
-  def searchWholeSite() = AsyncJsonOrFormDataPostAction(maxBytes = 200) {
+  def searchWholeSite() = JsonOrFormDataPostAction(maxBytes = 200) {
         apiReq: ApiRequest[JsonOrFormDataBody] =>
     val searchPhrase = apiReq.body.getOrThrowBadReq(SearchPhraseFieldName)
     searchImpl(searchPhrase, anyRootPageId = None, apiReq)
   }
 
 
-  def searchSiteSectionFor(phrase: String, pageId: String) = AsyncGetAction { apiReq =>
+  def searchSiteSectionFor(phrase: String, pageId: String) = GetAction { apiReq =>
     searchImpl(phrase, anyRootPageId = Some(pageId), apiReq)
   }
 
 
-  def searchSiteSection(pageId: String) = AsyncJsonOrFormDataPostAction(maxBytes = 200) {
+  def searchSiteSection(pageId: String) = JsonOrFormDataPostAction(maxBytes = 200) {
         apiReq: ApiRequest[JsonOrFormDataBody] =>
     val searchPhrase = apiReq.body.getOrThrowBadReq(SearchPhraseFieldName)
     searchImpl(searchPhrase, anyRootPageId = Some(pageId), apiReq)

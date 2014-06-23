@@ -42,13 +42,13 @@ import Utils.{OkHtml}
 object LoginController extends mvc.Controller {
 
 
-  def loginWith(provider: String, returnToUrl: String) = AsyncExceptionActionNoBody {
+  def loginWith(provider: String, returnToUrl: String) = ExceptionAction(parse.empty) {
         implicit reqest =>
     asyncLogin(provider = provider, returnToUrl = returnToUrl)
   }
 
 
-  def loginWithPostData(returnToUrl: String) = AsyncExceptionAction(
+  def loginWithPostData(returnToUrl: String) = ExceptionAction(
         parse.urlFormEncoded(maxLength = 200)) { implicit request =>
     // For now. Should handle guest login forms too.
     LoginWithOpenIdController.asyncLoginWithPostData(returnToUrl = "")

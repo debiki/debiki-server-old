@@ -27,6 +27,7 @@ import play.api.{mvc => pm}
 import play.api.libs.json._
 import play.api.libs.json.Json.toJson
 import requests._
+import scala.concurrent.Future
 import Utils._
 import Utils.ValidationImplicits._
 import DbDao.PathClashException
@@ -82,7 +83,8 @@ object CreatePageController extends mvc.Controller {
       s"&parentPageId=${anyParentPageId getOrElse ""}" +
       s"&status=$statusStr"
 
-    OkSafeJson(JsObject(Seq("viewNewPageUrl" -> JsString(viewNewPageUrl))))
+    Future.successful(OkSafeJson(
+      JsObject(Seq("viewNewPageUrl" -> JsString(viewNewPageUrl)))))
   }
 
 
@@ -155,7 +157,7 @@ object CreatePageController extends mvc.Controller {
     val infoNode = <pre class='dw-user-page-data'>{userPageDataJson}</pre>
     val pageHtml = pageReq.dao.renderTemplate(pageReq, appendToBody = infoNode)
 
-    Ok(pageHtml) as HTML
+    Future.successful(Ok(pageHtml) as HTML)
   }
 
 

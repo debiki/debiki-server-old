@@ -27,6 +27,8 @@ import play.api.mvc.{Action => _, _}
 import requests.DebikiRequest
 import actions.ApiActions.PostJsonAction
 import play.api.libs.json.JsObject
+import scala.concurrent.Future
+
 
 
 /** Logs in guest users.
@@ -77,7 +79,8 @@ object LoginAsGuestController extends mvc.Controller {
     // Could include a <a href=last-page>Okay</a> link, see the
     // Logout dialog below. Only needed if javascript disabled though,
     // otherwise a javascript welcome dialog is shown instead.
-    Ok.withCookies(userConfigCookie::sidAndXsrfCookies: _*)
+    Future.successful(Ok.withCookies(
+      userConfigCookie::sidAndXsrfCookies: _*))
   }
 
 

@@ -25,6 +25,7 @@ import debiki.DebikiHttp._
 import play.api._
 import play.api.libs.json._
 import requests.{PageRequest, JsonPostRequest}
+import scala.concurrent.Future
 import Utils.OkSafeJson
 
 
@@ -88,7 +89,7 @@ object VoteController extends mvc.Controller {
       }
 
     val json = BrowserPagePatcher(pageReq).jsonForPost(postId, pageParts)
-    OkSafeJson(json)
+    Future.successful(OkSafeJson(json))
   }
 
 }

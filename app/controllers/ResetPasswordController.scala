@@ -27,6 +27,8 @@ import java.{util => ju}
 import play.api._
 import play.api.mvc.{Action => _, _}
 import requests.ApiRequest
+import scala.concurrent.Future
+
 
 
 /** Resets the password of a PasswordIdentity, in case the user forgot it.
@@ -42,7 +44,8 @@ object ResetPasswordController extends mvc.Controller {
 
 
   def showResetPasswordPage = GetAction { request =>
-    Ok(views.html.resetpassword.specifyEmailAddress(xsrfToken = request.xsrfToken.value))
+    Future.successful(Ok(
+      views.html.resetpassword.specifyEmailAddress(xsrfToken = request.xsrfToken.value)))
   }
 
 
@@ -66,7 +69,8 @@ object ResetPasswordController extends mvc.Controller {
         Logger.info(s"Not sending password reset email to non-existing user: $emailAddress")
     }
 
-    Redirect(routes.ResetPasswordController.showEmailSentPage())
+    Future.successful(Redirect(
+      routes.ResetPasswordController.showEmailSentPage()))
   }
 
 
@@ -107,15 +111,17 @@ object ResetPasswordController extends mvc.Controller {
 
 
   def showEmailSentPage = GetAction { request =>
-    Ok(views.html.resetpassword.emailSent())
+    Future.successful(Ok(
+      views.html.resetpassword.emailSent()))
   }
 
 
   def showChooseNewPasswordPage(resetPasswordEmailId: String) = GetAction { request =>
     loginByEmailOrThrow(resetPasswordEmailId, request)
-    Ok(views.html.resetpassword.chooseNewPassword(
-      xsrfToken = request.xsrfToken.value,
-      anyResetPasswordEmailId = resetPasswordEmailId))
+    Future.successful(Ok(
+      views.html.resetpassword.chooseNewPassword(
+        xsrfToken = request.xsrfToken.value,
+        anyResetPasswordEmailId = resetPasswordEmailId)))
   }
 
 
@@ -148,12 +154,14 @@ object ResetPasswordController extends mvc.Controller {
     request.dao.changePassword(
       passwordIdentity, newPasswordSaltHash = DbDao.saltAndHashPassword(newPassword))
 
-    Ok(views.html.resetpassword.passwordHasBeenChanged())
+    Future.successful(Ok(
+      views.html.resetpassword.passwordHasBeenChanged()))
   }
 
 
   def showPasswordChangedPage = GetAction { request =>
-    Ok(views.html.resetpassword.passwordHasBeenChanged())
+    Future.successful(Ok(
+      views.html.resetpassword.passwordHasBeenChanged()))
   }
 
 

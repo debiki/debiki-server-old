@@ -23,6 +23,7 @@ import com.debiki.core._
 import com.debiki.core.Prelude._
 import debiki._
 import play.api.mvc
+import scala.concurrent.Future
 import DebikiHttp._
 import Utils.{OkHtml, OkXml}
 
@@ -46,14 +47,16 @@ object LegalController extends mvc.Controller {
      */
 
     // For now: (use hardcoded ToU page, no custimization)
-    Ok(views.html.legal.termsOfUse(SiteTpi(apiReq)).body) as HTML
+    Future.successful(Ok(
+      views.html.legal.termsOfUse(SiteTpi(apiReq)).body) as HTML)
   }
 
 
   def viewPrivacyPolicyPage() = GetAction { apiReq =>
     // Later: allow overriding privacy policy, see comments in viewTermsOfUsePage() above.
     // For now:
-    Ok(views.html.legal.privacyPolicy(SiteTpi(apiReq)).body) as HTML
+    Future.successful(Ok(
+      views.html.legal.privacyPolicy(SiteTpi(apiReq)).body) as HTML)
   }
 
 }

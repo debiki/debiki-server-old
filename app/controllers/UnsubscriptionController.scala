@@ -28,6 +28,7 @@ import play.api.mvc.BodyParsers.parse
 import play.api.data.Forms._
 import play.api.mvc.{Action => _, _}
 import requests.realOrFakeIpOf
+import scala.concurrent.Future
 import Prelude._
 import Utils.{OkHtml}
 
@@ -70,8 +71,9 @@ object UnsubscriptionController extends mvc.Controller {
     })
 
 
-  def showForm(tenantId: String) = ExceptionActionNoBody { implicit request =>
-    Ok(views.html.unsubscribePage(emailId, doWhat, nextPage))
+  def showForm(tenantId: String) = ExceptionAction(parse.empty) { implicit request =>
+    Future.successful(
+      Ok(views.html.unsubscribePage(emailId, doWhat, nextPage)))
   }
 
 
@@ -115,7 +117,7 @@ object UnsubscriptionController extends mvc.Controller {
     }
 
     // Tell user what happened.
-    SeeOther(nextPage)
+    Future.successful(SeeOther(nextPage))
   }
 
 }

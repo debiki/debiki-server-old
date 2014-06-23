@@ -19,6 +19,7 @@ package actions
 
 import com.debiki.core._
 import com.debiki.core.Prelude._
+import controllers.Utils
 import debiki._
 import debiki.DebikiHttp._
 import debiki.dao.SiteDao
@@ -26,7 +27,7 @@ import java.{util => ju}
 import play.api._
 import play.api.mvc.{Action => _, _}
 import requests._
-import controllers.Utils
+import scala.concurrent.Future
 
 
 /**
@@ -47,14 +48,14 @@ object PageActions {
   def PageGetAction
         (pathIn: PagePath, pageMustExist: Boolean = true, fixPath: Boolean = true,
          maySetCookies: Boolean = true)
-        (f: PageGetRequest => SimpleResult) =
+        (f: PageGetRequest => Future[SimpleResult]) =
     PageReqAction(BodyParsers.parse.empty)(
       pathIn, pageMustExist, fixPath = fixPath, maySetCookies = maySetCookies)(f)
 
 
   def FolderGetAction
         (pathIn: PagePath)
-        (f: PageGetRequest => SimpleResult) =
+        (f: PageGetRequest => Future[SimpleResult]) =
     FolderReqAction(BodyParsers.parse.empty)(pathIn)(f)
 
 
@@ -65,7 +66,7 @@ object PageActions {
   def PagePostAction
         (maxUrlEncFormBytes: Int)
         (pathIn: PagePath, pageMustExist: Boolean = true, fixPath: Boolean = true)
-        (f: PagePostRequest => SimpleResult) =
+        (f: PagePostRequest => Future[SimpleResult]) =
     PageReqAction(
       BodyParsers.parse.urlFormEncoded(maxLength = maxUrlEncFormBytes))(
       pathIn, pageMustExist, fixPath = fixPath)(f)
@@ -80,7 +81,7 @@ object PageActions {
   def PagePostAction2
         (maxBytes: Int)
         (pathIn: PagePath, pageMustExist: Boolean = true, fixPath: Boolean = true)
-        (f: PagePostRequest2 => SimpleResult) =
+        (f: PagePostRequest2 => Future[SimpleResult]) =
     PageReqAction(
       JsonOrFormDataBody.parser(maxBytes = maxBytes))(
       pathIn, pageMustExist, fixPath = fixPath)(f)
@@ -90,7 +91,7 @@ object PageActions {
         (parser: BodyParser[A])
         (pathIn: PagePath, pageMustExist: Boolean, fixPath: Boolean,
          maySetCookies: Boolean = true)
-        (f: PageRequest[A] => SimpleResult)
+        (f: PageRequest[A] => Future[SimpleResult])
         = CheckPathAction[A](parser)(
             pathIn, maySetCookies = maySetCookies, fixPath = fixPath) {
       (sidStatus, xsrfOk, browserId, pathOkOpt, dao, request) =>
@@ -144,7 +145,7 @@ object PageActions {
   def FolderReqAction[A]
         (parser: BodyParser[A])
         (pathIn: PagePath)
-        (f: PageRequest[A] => SimpleResult)
+        (f: PageRequest[A] => Future[SimpleResult])
     = SafeActions.CheckSidAction[A](parser, maySetCookies = true) {
         (sidStatus, xsrfOk, browserId, request) =>
 
@@ -198,7 +199,7 @@ object PageActions {
   def CheckPathActionNoBody
         (pathIn: PagePath)
         (f: (SidStatus, XsrfOk, Option[BrowserId], Option[PagePath], SiteDao,
-           Request[Option[Any]]) => SimpleResult) =
+           Request[Option[Any]]) => Future[SimpleResult]) =
     CheckPathAction(BodyParsers.parse.empty)(pathIn)(f)
 
 
@@ -206,7 +207,7 @@ object PageActions {
         (parser: BodyParser[A])
         (pathIn: PagePath, maySetCookies: Boolean = true, fixPath: Boolean = true)
         (f: (SidStatus, XsrfOk, Option[BrowserId], Option[PagePath], SiteDao, Request[A]) =>
-           SimpleResult) =
+           Future[SimpleResult]) =
     SafeActions.CheckSidAction[A](parser, maySetCookies = maySetCookies) {
         (sidStatus, xsrfOk, browserId, request) =>
       val dao = Globals.siteDao(siteId = pathIn.tenantId,
@@ -218,7 +219,8 @@ object PageActions {
           } else if (!fixPath) {
             f(sidStatus, xsrfOk, browserId, None, dao, request)
           } else {
-            Results.MovedPermanently(correct.value)
+            Future.successful(
+              Results.MovedPermanently(correct.value))
           }
         case None => f(sidStatus, xsrfOk, browserId, None, dao, request)
       }

@@ -29,6 +29,7 @@ import play.api.mvc.{Action => _, _}
 import play.api.libs.json.Json.toJson
 import play.api.libs.json._
 import requests._
+import scala.concurrent.Future
 import DebikiHttp._
 import Utils.ValidationImplicits._
 import Utils.{OkHtml, OkXml}
@@ -48,7 +49,7 @@ object ViewPageController extends mvc.Controller {
   def showActionLinks(pathIn: PagePath, postId: ActionId) =
     PageGetAction(pathIn) { pageReq =>
       val links = Utils.formHtml(pageReq).actLinks(postId)
-      OkHtml(links)
+      Future.successful(OkHtml(links))
     }
 
 
@@ -67,7 +68,7 @@ object ViewPageController extends mvc.Controller {
       <pre class="dw-user-page-data">{ userPageDataJson }</pre>
       </span>
     val pageHtml = pageReq.dao.renderTemplate(pageReq, appendToBody = dataNodes)
-    Ok(pageHtml) as HTML
+    Future.successful(Ok(pageHtml) as HTML)
   }
 
 
@@ -84,7 +85,7 @@ object ViewPageController extends mvc.Controller {
     val pageReq = PageRequest.forPageThatExists(request, pageId) getOrElse throwNotFound(
       "DwE404FL9", s"Page `$pageId' not found")
     val json = buildUserPageDataJson(pageReq)
-    Ok(json)
+    Future.successful(Ok(json))
   }
 
 

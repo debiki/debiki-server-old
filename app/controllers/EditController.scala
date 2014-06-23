@@ -30,6 +30,7 @@ import play.api.data._
 import play.api.data.Forms._
 import play.api.mvc.{Action => _, _}
 import requests._
+import scala.concurrent.Future
 import scala.collection.{mutable => mut}
 import Utils.{OkSafeJson, OkHtml, Passhasher, parseIntOrThrowBadReq}
 
@@ -105,7 +106,8 @@ object EditController extends mvc.Controller {
     val draftText = vipo.currentText  // in the future, load user's draft from db.
     val editForm = Utils.formHtml(request).editForm(
        vipo, newText = draftText, userName = request.sid.displayName)
-    OkHtml(editForm)
+    Future.successful(
+      OkHtml(editForm))
   }
 
 
@@ -285,9 +287,9 @@ object EditController extends mvc.Controller {
 
     // Show the unapproved version of this post, so any applied edits are included.
     // (An edit suggestion, however, won't be included, until it's been applied.)
-    OkSafeJson(
+    Future.successful(OkSafeJson(
       BrowserPagePatcher(request, showAllUnapproved = true)
-        .jsonForMyEditedPosts(editIdsAndPages))
+        .jsonForMyEditedPosts(editIdsAndPages)))
   }
 
 

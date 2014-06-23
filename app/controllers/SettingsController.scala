@@ -25,6 +25,7 @@ import debiki.DebikiHttp._
 import play.api._
 import play.api.libs.json._
 import requests.{GetRequest, JsonPostRequest}
+import scala.concurrent.Future
 import Utils.OkSafeJson
 
 
@@ -36,13 +37,13 @@ object SettingsController extends mvc.Controller {
 
   def loadSiteSettings = AdminGetAction { request: GetRequest =>
     val settings = request.dao.loadWholeSiteSettings()
-    OkSafeJson(settings.toJson)
+    Future.successful(OkSafeJson(settings.toJson))
   }
 
 
   def loadSectionSettings(rootPageId: PageId) = AdminGetAction { request: GetRequest =>
     val settings = request.dao.loadPageTreeSettings(rootPageId)
-    OkSafeJson(settings.toJson)
+    Future.successful(OkSafeJson(settings.toJson))
   }
 
 
@@ -77,7 +78,7 @@ object SettingsController extends mvc.Controller {
     }
 
     request.dao.saveSetting(section, name, newValue)
-    Ok
+    Future.successful(Ok)
   }
 
 }

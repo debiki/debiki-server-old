@@ -34,6 +34,7 @@ import i18n.Messages
 import play.api.mvc.{Action => _, _}
 import play.api.Play.current
 import requests.GetRequest
+import scala.concurrent.Future
 import securesocial.core._
 import securesocial.controllers.TemplatesPlugin
 import securesocial.core.providers.utils.RoutesHelper
@@ -53,7 +54,8 @@ object LoginWithSecureSocialController extends mvc.Controller {
     */
   def startAuthentication(provider: String, returnToUrl: String) = GetAction { request =>
     val theReply = handleAuthImpl(provider)(request)
-    theReply.withCookies(Cookie(name = ReturnToUrlCookieName, value = returnToUrl))
+    Future.successful(
+      theReply.withCookies(Cookie(name = ReturnToUrlCookieName, value = returnToUrl)))
   }
 
 
@@ -62,7 +64,8 @@ object LoginWithSecureSocialController extends mvc.Controller {
     * what has happened (i.e. that the user logged in).
     */
   def startAuthenticationInPopupWindow(provider: String) = GetAction { request =>
-    handleAuthImpl(provider)(request)
+    Future.successful(
+      handleAuthImpl(provider)(request))
   }
 
 
@@ -72,7 +75,8 @@ object LoginWithSecureSocialController extends mvc.Controller {
   def authenticateByPost(provider: String) = handleAuth(provider)
 
   private def handleAuth(provider: String) = GetAction { request =>
-    handleAuthImpl(provider)(request)
+    Future.successful(
+      handleAuthImpl(provider)(request))
   }
 
 

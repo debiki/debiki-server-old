@@ -28,6 +28,7 @@ import play.api._
 import play.api.mvc.{Action => _, _}
 import play.api.Play.current
 import requests.PageRequest
+import scala.concurrent.Future
 import DebikiHttp._
 import Utils.ValidationImplicits._
 import Utils.{OkHtml, OkXml}
@@ -41,16 +42,17 @@ object AdminController extends mvc.Controller {
 
   def viewAdminPage() = GetAction { apiReq =>
     if (apiReq.user.map(_.isAdmin) != Some(true)) {
-      Ok(views.html.login.loginPage(xsrfToken = apiReq.xsrfToken.value,
+      Future.successful(Ok(views.html.login.loginPage(
+        xsrfToken = apiReq.xsrfToken.value,
         returnToUrl = apiReq.uri, title = "Login", message = Some(
-          "Login as administrator to access this page.")))
+          "Login as administrator to access this page."))))
     }
     else {
       val adminPageBody = views.html.adminPage(
         hostname = apiReq.host,
         minMaxJs = TemplateProgrammingInterface.minMaxJs,
         minMaxCss = TemplateProgrammingInterface.minMaxCss).body
-      Ok(adminPageBody) as HTML withCookies (
+      Future.successful(Ok(adminPageBody) as HTML withCookies
         mvc.Cookie(
           DebikiSecurity.XsrfCookieName, apiReq.xsrfToken.value,
           httpOnly = false))
@@ -61,11 +63,13 @@ object AdminController extends mvc.Controller {
   // Remove later. (Dupl code, but I'm going to remove it anyway)
   def viewAdminPageOld() = GetAction { apiReq =>
     if (apiReq.user.map(_.isAdmin) != Some(true))
-      Ok(views.html.login.loginPage(xsrfToken = apiReq.xsrfToken.value,
-        returnToUrl = apiReq.uri, title = "Login", message = Some(
-          "Login as administrator to access this page.")))
+      Future.successful(Ok(
+        views.html.login.loginPage(xsrfToken = apiReq.xsrfToken.value,
+          returnToUrl = apiReq.uri, title = "Login", message = Some(
+            "Login as administrator to access this page."))))
     else
-      Ok(views.html.adminPageOld(apiReq.host).body) as HTML withCookies (
+      Future.successful(Ok(
+        views.html.adminPageOld(apiReq.host).body) as HTML withCookies
         mvc.Cookie(
           DebikiSecurity.XsrfCookieName, apiReq.xsrfToken.value,
           httpOnly = false))

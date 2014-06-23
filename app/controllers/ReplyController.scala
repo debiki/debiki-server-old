@@ -27,6 +27,7 @@ import debiki.DebikiHttp._
 import play.api._
 import play.api.mvc.{Action => _, _}
 import requests._
+import scala.concurrent.Future
 import BrowserPagePatcher.TreePatchSpec
 
 
@@ -57,7 +58,7 @@ object ReplyController extends mvc.Controller {
     }
 
     val json = saveReply(pageReq, replyTo = postId, text, whereOpt)
-    OkSafeJson(json)
+    Future.successful(OkSafeJson(json))
   }
 
 

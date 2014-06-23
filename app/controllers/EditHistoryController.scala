@@ -26,6 +26,7 @@ import debiki.DebikiHttp._
 import play.api._
 import play.api.mvc.{Action => _}
 import requests._
+import scala.concurrent.Future
 import Utils.{OkSafeJson, OkHtml}
 import Utils.parseIntOrThrowBadReq
 
@@ -51,7 +52,7 @@ object EditHistoryController extends mvc.Controller {
     val form = Utils.formHtml(pageReq).editsDialog(
       post, page, pageReq.sid.displayName, mayEdit = mayEdit)
 
-    OkHtml(form)
+    Future.successful(OkHtml(form))
   }
 
 
@@ -90,9 +91,9 @@ object EditHistoryController extends mvc.Controller {
     assert(postIds.length <= 1, "DwE44BKZ3")
     val postId = postIds.headOption getOrDie "DwE55EGf0"
 
-    OkSafeJson(
+    Future.successful(OkSafeJson(
       BrowserPagePatcher(request, showAllUnapproved = true)
-        .jsonForPost(postId, updatedPage.parts))
+        .jsonForPost(postId, updatedPage.parts)))
   }
 
 

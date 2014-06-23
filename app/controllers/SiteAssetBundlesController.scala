@@ -23,6 +23,7 @@ import debiki._
 import debiki.DebikiHttp._
 import java.{util => ju}
 import play.api._
+import scala.concurrent.Future
 import Prelude._
 
 
@@ -48,7 +49,7 @@ object SiteAssetBundlesController extends mvc.Controller {
    */
   def at(file: String) = GetAction { request =>
     // `file` is like: bundle-name.<version>.css.
-    file match {
+    val result = file match {
       case AssetBundleFileNameRegex(nameNoSuffix, version, suffix) =>
         // Ignore `version` for now. It's only used for asset versioning —
         // but we always serve the most recent version of the bundle.
@@ -83,6 +84,7 @@ object SiteAssetBundlesController extends mvc.Controller {
       case _ =>
         NotFoundResult("DwE93BY1", s"Bad asset bundle URL path: $file")
     }
+    Future.successful(result)
   }
 
 
