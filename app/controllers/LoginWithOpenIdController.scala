@@ -76,15 +76,17 @@ object LoginWithOpenIdController extends mvc.Controller {
   def asyncLogin(returnToUrl: String, openIdIdentifier: String)
        (implicit request: Request[_]): Future[SimpleResult] = {
 
-    val realm = _wildcardRealmFor(request.host)
+    val realm = wildcardRealmFor(request)
 
     // Find out to which OpenID provider the user should be redirected to,
     // and subsequently login.
-    var futureUrl: Future[String] =
+    val callbackUrlHttp = routes.LoginWithOpenIdController.loginCallback(returnToUrl).absoluteURL()
+    val callbackUrlHttps = callbackUrlHttp.replaceAllLiterally("http://", "https://")  HACK, FIX
+    val futureUrl: Future[String] =
       oid.OpenID.redirectURL(  // issues a HTTP request
-        openIdIdentifier,
-        routes.LoginWithOpenIdController.loginCallback(returnToUrl).absoluteURL(),
-        RequiredAttrs,
+        openID = openIdIdentifier,
+        callbackURL = callbackUrlHttps,
+        axRequired = RequiredAttrs,
         realm = Some(realm))
 
     // On success, redirect the browser to that provider.
@@ -119,10 +121,12 @@ object LoginWithOpenIdController extends mvc.Controller {
    *   http://code.google.com/googleapps/marketplace/sso.html
    *   http://code.google.com/intl/es-ES/apis/accounts/docs/OpenID.html
    */
-  private def _wildcardRealmFor(host: String): String = {
+  private def wildcardRealmFor(request: Request[_]): String = {
+    val scheme = request.uri.takeWhile(_ != ':')   Ooops won't work, uri doesn't include scheme
+    val host = request.host
     val isIpNo = _IpRegex matches host
     val hostNameSpecified = !isIpNo && host.count(_ == '.') >= 2
-    val realm = "http://"+ (if (hostNameSpecified) {
+    val realmHost = if (hostNameSpecified) {
       // The host is like "hostname.example.com". Replace "hostname" with "*"
       // to get a realm like "*.example.com".
       val dotAndDomain = host.dropWhile(_ != '.')
@@ -132,8 +136,10 @@ object LoginWithOpenIdController extends mvc.Controller {
       // wildcard realm. ("*.some-domain.com" is not considered
       // the same realm as "some-domain.com".)
       host
-    })
+    }
+    val realm = s"$scheme://$realmHost"
     realm
+    "https://localhost:9443"   HACK, FIX
   }
 
 
@@ -191,7 +197,7 @@ object LoginWithOpenIdController extends mvc.Controller {
     // (See https://developers.google.com/accounts/docs/OpenID#Parameters )
     // So we can reconstruct the realm that was specified
     // in the request to the OP, like so:
-    val oidRealm = _wildcardRealmFor(request.host)
+    val oidRealm = wildcardRealmFor(request)
 
     // ----- Save login in database
 
