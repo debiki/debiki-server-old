@@ -26,7 +26,7 @@
 
 @ngScriptTags = @{
   if (ngAppName ne null) {
-    <script src={"https://ajax.googleapis.com/ajax/libs/angularjs/1.0.1/angular."+minMaxJs}></script>
+    <script src={"//ajax.googleapis.com/ajax/libs/angularjs/1.0.1/angular."+minMaxJs}></script>
     <script src={"/-/res/debiki-spa-common."+minMaxJs}></script>
   }
   else Nil
@@ -53,14 +53,14 @@
 <html @Html(ngAppAttr)>
 <head>
 <title>Create Website</title>
-<link href="http://fonts.googleapis.com/css?family=Bree+Serif" rel="stylesheet">
-<link href="http://netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/css/bootstrap.no-icons.min.css" rel="stylesheet">
+<link href="//fonts.googleapis.com/css?family=Bree+Serif" rel="stylesheet">
+<link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/css/bootstrap.no-icons.min.css" rel="stylesheet">
 <link rel="stylesheet" href="@asset("fontello/css/fontello-embedded.css")"/>
 <link rel="stylesheet" href="@asset("admin.css")"/>
 <link rel="stylesheet" href="@asset("special-pages.css")"/>
 <style>@Html(css)</style>
-<script src="http://cdnjs.cloudflare.com/ajax/libs/modernizr/2.5.3/modernizr.min.js"></script>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.@minMaxJs"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/modernizr/2.5.3/modernizr.min.js"></script>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.@minMaxJs"></script>
 <script>
   var debiki = { v0: { util: {} }, internal: { $: jQuery } };
 </script>
