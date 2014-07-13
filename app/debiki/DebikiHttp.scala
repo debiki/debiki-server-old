@@ -194,9 +194,9 @@ object DebikiHttp {
               Logger.warn("Should <link rel='canonical'> to the canonical address [DwE1U80]")
         }
         siteId
-      case _ =>
-        systemDao.lookupTenant(scheme = "http", // for now
-             host = request.host) match {
+      case host =>
+        val scheme = "http" // for now
+        systemDao.lookupTenant(scheme, host = host) match {
           case found: FoundChost =>
             found.tenantId
           case found: FoundAlias =>
@@ -211,7 +211,7 @@ object DebikiHttp {
                 assErr("DwE01k5Bk08")
           }
           case FoundNothing =>
-            throwNotFound("DwEI5F2", "The specified host name maps to no tenant.")
+            throwNotFound("DwEI5F2", s"There's no site at `$scheme://$host'")
         }
     }
 

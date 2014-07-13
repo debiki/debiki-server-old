@@ -21,6 +21,8 @@ package debiki.dao
 import com.debiki.core._
 import com.debiki.core.Prelude._
 import java.{util => ju}
+import play.api.Play
+import play.api.Play.current
 import CachingDao.{CacheKeyAnySite, CacheValueIgnoreVersion}
 
 
@@ -54,8 +56,19 @@ class SystemDao(protected val systemDbDao: SystemDbDao) {
     systemDbDao.loadTenants(Seq(siteId)).headOption
 
   // COULD rename to findWebsitesCanonicalHost
-  def lookupTenant(scheme: String, host: String): TenantLookup =
-    systemDbDao.lookupTenant(scheme, host)
+  def lookupTenant(scheme: String, host: String): TenantLookup = {
+    systemDbDao.lookupTenant(scheme, host) match {
+      case FoundNothing if Play.isDev =>
+        // When running on localhost in Dev mode, Play listens on e.g. 9000 or 9443,
+        // however in production the web server would listen on port 80 or 443
+        // and the port would not need to be specified. — Remove the port, so one won't
+        // need to add entries with suffixes ':9000' and ':9443' to all websites in Dev mode.
+        val hostNoPort = host.takeWhile(_ != ':')
+        systemDbDao.lookupTenant(scheme, hostNoPort)
+      case x =>
+        x
+    }
+  }
 
 
   // ----- Emails
