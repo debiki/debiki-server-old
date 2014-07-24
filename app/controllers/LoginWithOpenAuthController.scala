@@ -40,18 +40,12 @@ import scala.concurrent.Future
   */
 object LoginWithOpenAuthController extends Controller {
 
-  private val ReturnToUrlCookieName = "dwCoReturnToUrl"
-
 
   /** The authentication flow starts here, if it happens in the main window and you
     * thus have a page you want to return to afterwards.
     */
   def startAuthentication(provider: String, returnToUrl: String, request: Request[Unit]) = {
-    val futureResponse = authenticate(provider, request)
-    futureResponse map { response =>
-      response.withCookies(
-        Cookie(name = ReturnToUrlCookieName, value = returnToUrl))
-    }
+    authenticate(provider, request, Some(returnToUrl))
   }
 
 
@@ -60,7 +54,7 @@ object LoginWithOpenAuthController extends Controller {
     * what has happened (i.e. that the user logged in).
     */
   def startAuthenticationInPopupWindow(provider: String) = Action.async(empty) { request =>
-    authenticate(provider, request)
+    authenticate(provider, request, returnToUrl = None)
   }
 
 
@@ -75,7 +69,8 @@ object LoginWithOpenAuthController extends Controller {
     *   https://github.com/mohiva/play-silhouette-seed/blob/master/
     *                     app/controllers/SocialAuthController.scala#L32
     */
-  private def authenticate(providerName: String, request: Request[Unit]): Future[Result] = {
+  private def authenticate(providerName: String, request: Request[Unit],
+        returnToUrl: Option[String] = None): Future[Result] = {
     val provider: SocialProvider[_] with CommonSocialProfileBuilder[_] = providerName match {
       case silhouette.core.providers.oauth2.FacebookProvider.Facebook =>
         facebookProvider(request)
@@ -84,12 +79,12 @@ object LoginWithOpenAuthController extends Controller {
       case x =>
         return Future.successful(Results.Forbidden(s"Bad provider: `$providerName' [DwE2F0D6]"))
     }
-    val authFutureResult = provider.authenticate()(request)
+    val authFutureResult = provider.authenticate(returnToUrl getOrElse "")(request)
     authFutureResult.flatMap {
-      case Left(result) =>
+      case AuthenticationOngoing(result) =>
         Future.successful(result)
-      case Right(profile: provider.Profile) =>
-        loginAndRedirect(request, profile)
+      case result: provider.AuthenticationCompleted =>
+        loginAndRedirect(request, result.profile, returnToUrl = result.state)
     }.recoverWith({
       case e: siex.AccessDeniedException =>
         Future.successful(Results.Forbidden)
@@ -99,8 +94,8 @@ object LoginWithOpenAuthController extends Controller {
   }
 
 
-  private def loginAndRedirect(request: Request[Unit], profile: CommonSocialProfile[_])
-        : Future[Result] = {
+  private def loginAndRedirect(request: Request[Unit], profile: CommonSocialProfile[_],
+        returnToUrl: String): Future[Result] = {
     p.Logger.debug(s"User logging in: $profile")
 
     val siteId = debiki.DebikiHttp.lookupTenantIdOrThrow(request, debiki.Globals.systemDao)
@@ -124,15 +119,16 @@ object LoginWithOpenAuthController extends Controller {
     val userConfigCookie = ConfigUserController.userConfigCookie(loginGrant)
     val newSessionCookies = userConfigCookie::sidAndXsrfCookies
 
-    val response = request.cookies.get(ReturnToUrlCookieName) match {
-      case Some(returnToUrlCookie) =>
-        Redirect(returnToUrlCookie.value).discardingCookies(DiscardingCookie(ReturnToUrlCookieName))
-      case None =>
+    val response =
+      if (returnToUrl.nonEmpty) {
+        Redirect(returnToUrl)
+      }
+      else {
         // We're logging in in a popup.
         Ok(views.html.login.loginPopupCallback("LoginOk",
           s"You have been logged in, welcome ${loginGrant.displayName}!",
           anyReturnToUrl = None))
-    }
+      }
 
     // PostgreSQL doesn't support async requests; everything above has happened already.
     Future.successful(
@@ -150,6 +146,7 @@ object LoginWithOpenAuthController extends Controller {
   private def googleProvider(request: Request[Unit])
         : GoogleProvider with CommonSocialProfileBuilder[OAuth2Info] = {
     GoogleProvider(CacheLayer, HttpLayer, OAuth2Settings(
+      applicationSecret = Play.configuration.getString("application.secret").get,
       authorizationURL = Play.configuration.getString("silhouette.google.authorizationURL").get,
       accessTokenURL = Play.configuration.getString("silhouette.google.accessTokenURL").get,
       redirectURL = buildRedirectUrl(request, "google"),
@@ -162,6 +159,7 @@ object LoginWithOpenAuthController extends Controller {
   private def facebookProvider(request: Request[Unit])
         : FacebookProvider with CommonSocialProfileBuilder[OAuth2Info] = {
     FacebookProvider(CacheLayer, HttpLayer, OAuth2Settings(
+      applicationSecret = Play.configuration.getString("application.secret").get,
       authorizationURL = Play.configuration.getString("silhouette.facebook.authorizationURL").get,
       accessTokenURL = Play.configuration.getString("silhouette.facebook.accessTokenURL").get,
       redirectURL = buildRedirectUrl(request, "facebook"),

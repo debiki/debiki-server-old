@@ -65,7 +65,7 @@ object ApplicationBuild extends Build {
     play.Play.autoImport.jdbc,
     play.Play.autoImport.cache,
     // Authentication.
-    "com.mohiva" %% "play-silhouette" % "1.0",
+    "com.mohiva" %% "play-silhouette" % "1.1-SNAPSHOT",
     // There's a PostgreSQL 903 build number too but it's not in the Maven repos.
     // PostgreSQL 9.2 drivers are also not in the Maven repos (as of May 2013).
     "postgresql" % "postgresql" % "9.1-901-1.jdbc4",
