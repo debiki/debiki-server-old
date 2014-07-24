@@ -5,10 +5,10 @@
 # The 'timeout' flag causes the script to abort if the tests take too long HOWEVER then CTRL-C won't work;
 # you'd have to kill the processes with `kill` if you don't want to wait for the timeout.
 
-# The `play` command should be provided either as a softlink in scripts/, or as an env variable
-# (define the env variable e.g. like so  $ export play=/mnt/tmp/dev/play-2.2.3/play  ).
-if [ -z "$play" ]; then
-  export play=scripts/play-2.2.3
+# The `activator` command should be provided either as a softlink in scripts/, or as an env variable
+# (define the env variable e.g. like so  $ export activator=/mnt/tmp/dev/activator-1.2.3/activator  ).
+if [ -z "$activator" ]; then
+  export activator=scripts/activator-1.2.3
 fi
 
 if [ "$1" = "timeout" ]; then
