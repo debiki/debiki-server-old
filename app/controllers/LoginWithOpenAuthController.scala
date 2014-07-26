@@ -83,7 +83,16 @@ object LoginWithOpenAuthController extends Controller {
       case x =>
         return Future.successful(Results.Forbidden(s"Bad provider: `$providerName' [DwE2F0D6]"))
     }
-    val authFutureResult = provider.authenticate(returnToUrl getOrElse "")(request)
+
+    val returnToUrlWithOrigin = returnToUrl map { url =>
+      if (url.startsWith("http://") || url.startsWith("https://")) url
+      else {
+        val scheme = if (request.secure) "https" else "http"
+        s"$scheme://${request.host}$url"
+      }
+    }
+
+    val authFutureResult = provider.authenticate(returnToUrlWithOrigin getOrElse "")(request)
     authFutureResult.flatMap {
       case AuthenticationOngoing(result) =>
         Future.successful(result)
@@ -102,7 +111,9 @@ object LoginWithOpenAuthController extends Controller {
         returnToUrl: String): Future[Result] = {
     p.Logger.debug(s"User logging in: $profile")
 
-    val siteId = debiki.DebikiHttp.lookupTenantIdOrThrow(request, debiki.Globals.systemDao)
+    // We're logging in to the site that `returnToUrl` points at, which
+    // might be different from the site hosted at `request.host`.
+    val siteId = debiki.DebikiHttp.lookupTenantIdOrThrow(returnToUrl, debiki.Globals.systemDao)
     val dao = debiki.Globals.siteDao(siteId, ip = request.remoteAddress)
 
     val loginAttempt = OpenAuthLoginAttempt(
@@ -199,9 +210,14 @@ object LoginWithOpenAuthController extends Controller {
   }
 
 
+  val anyLoginOrigin = Play.configuration.getString("debiki.loginOrigin")
+
+
   private def buildRedirectUrl(request: Request[_], provider: String) = {
-    val scheme = if (request.secure) "https" else "http"
-    val origin = s"$scheme://${request.host}"
+    val origin = anyLoginOrigin getOrElse {
+      val scheme = if (request.secure) "https" else "http"
+      s"$scheme://${request.host}"
+    }
     origin + routes.LoginWithOpenAuthController.finishAuthentication(provider).url
   }
 
