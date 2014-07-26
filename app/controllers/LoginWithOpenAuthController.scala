@@ -157,11 +157,12 @@ object LoginWithOpenAuthController extends Controller {
   private val HttpLayer =
     new silhouette.core.utils.PlayHTTPLayer
 
+  def applicationSecret = Play.configuration.getString("application.secret").get
+
 
   private def googleProvider(request: Request[Unit])
         : GoogleProvider with CommonSocialProfileBuilder[OAuth2Info] = {
-    GoogleProvider(CacheLayer, HttpLayer, OAuth2Settings(
-      applicationSecret = Play.configuration.getString("application.secret").get,
+    GoogleProvider(applicationSecret, HttpLayer, OAuth2Settings(
       authorizationURL = Play.configuration.getString("silhouette.google.authorizationURL").get,
       accessTokenURL = Play.configuration.getString("silhouette.google.accessTokenURL").get,
       redirectURL = buildRedirectUrl(request, "google"),
@@ -173,8 +174,7 @@ object LoginWithOpenAuthController extends Controller {
 
   private def facebookProvider(request: Request[Unit])
         : FacebookProvider with CommonSocialProfileBuilder[OAuth2Info] = {
-    FacebookProvider(CacheLayer, HttpLayer, OAuth2Settings(
-      applicationSecret = Play.configuration.getString("application.secret").get,
+    FacebookProvider(applicationSecret, HttpLayer, OAuth2Settings(
       authorizationURL = Play.configuration.getString("silhouette.facebook.authorizationURL").get,
       accessTokenURL = Play.configuration.getString("silhouette.facebook.accessTokenURL").get,
       redirectURL = buildRedirectUrl(request, "facebook"),
@@ -199,8 +199,7 @@ object LoginWithOpenAuthController extends Controller {
 
   private def githubProvider(request: Request[Unit])
         : GitHubProvider with CommonSocialProfileBuilder[OAuth2Info] = {
-    GitHubProvider(CacheLayer, HttpLayer, OAuth2Settings(
-      applicationSecret = Play.configuration.getString("application.secret").get,
+    GitHubProvider(applicationSecret, HttpLayer, OAuth2Settings(
       authorizationURL = Play.configuration.getString("silhouette.github.authorizationURL").get,
       accessTokenURL = Play.configuration.getString("silhouette.github.accessTokenURL").get,
       redirectURL = buildRedirectUrl(request, "github"),
