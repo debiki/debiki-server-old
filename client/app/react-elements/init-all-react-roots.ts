@@ -28,6 +28,7 @@
 
 var ReactRouter = window['ReactRouter'];
 
+export var sidebar;
 
 export function initAllReactRoots() {
   var dashbarElem = document.getElementById('dw-dashbar');
@@ -35,8 +36,9 @@ export function initAllReactRoots() {
     React.render(debiki2.dashbar.Dashbar({}), dashbarElem);
 
   var sidebarElem = document.getElementById('dw-any-sidebar');
-  if (sidebarElem)
-    React.render(debiki2.sidebar.Sidebar({}), sidebarElem);
+  if (sidebarElem) {
+    sidebar = React.render(debiki2.sidebar.Sidebar({}), sidebarElem);
+  }
 
   var commentsToolbarElem = document.getElementById('dw-comments-toolbar');
   if (commentsToolbarElem)

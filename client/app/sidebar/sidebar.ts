@@ -280,30 +280,37 @@ export var Sidebar = createComponent({
     var store = this.state.store;
     var unreadComments = [];
     var recentComments = [];
+    var starredComments = [];
 
     // Find 1) all unread comments, sorted in the way they appear on the page
     // And 2) all visible comments.
-    var addComments = (postIds: number[]) => {
+    var addComments = (postIds: number[], ancestorCollapsed: boolean) => {
       _.each(postIds, (postId) => {
         var post: Post = store.allPosts[postId];
         if (isDeleted(post))
           return;
 
-        var alreadyRead = postIdsReadLongAgo.indexOf(postId) !== -1 ||
-            post.authorId === store.user.userId;
-        if (!alreadyRead) {
-          unreadComments.push(post);
+        if (!ancestorCollapsed) {
+          var alreadyRead = postIdsReadLongAgo.indexOf(postId) !== -1 ||
+              post.authorId === store.user.userId;
+          if (!alreadyRead) {
+            unreadComments.push(post);
+          }
+          recentComments.push(post);
         }
-        recentComments.push(post);
 
-        if (!isCollapsed(post)) {
-          addComments(post.childIdsSorted);
-        }
+        /*
+        if (isStarred(post)) {
+          // Even if some ancestor is collapsed.
+          starredComments.push(post);
+        } */
+
+        addComments(post.childIdsSorted, ancestorCollapsed || isCollapsed(post));
       });
     };
 
     var rootPost = store.allPosts[store.rootPostId];
-    addComments(rootPost.childIdsSorted);
+    addComments(rootPost.childIdsSorted, false);
 
     recentComments.sort((a, b) => {
       if (a.createdAt < b.createdAt)

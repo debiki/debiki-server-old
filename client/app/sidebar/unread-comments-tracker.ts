@@ -18,6 +18,7 @@
 /// <reference path="../../typedefs/react/react.d.ts" />
 /// <reference path="../../typedefs/lodash/lodash.d.ts" />
 /// <reference path="../../shared/plain-old-javascript.d.ts" />
+/// <reference path="../react-elements/init-all-react-roots.ts" />
 
 //------------------------------------------------------------------------------
    module debiki2.sidebar.UnreadCommentsTracker {
@@ -74,6 +75,12 @@ export function getPostIdsReadLongAgo() {
 }
 
 
+export function getMarkOf(postId): number {
+  var state = readStatesByPostId[postId];
+  return state ? state.mark : null;
+}
+
+
 export function markAsRead(postId: number) {
   var state = readStatesByPostId[postId];
   if (state.mark) {
@@ -82,6 +89,7 @@ export function markAsRead(postId: number) {
   }
   state.mark = ManualReadMark;
   saveMarksInLocalStorage();
+  debiki2.reactelements.sidebar.forceUpdate();
   updateMarkGraphics(postId);
 }
 
@@ -98,12 +106,13 @@ export function cycleToNextMark(postId: number) {
     delete state.mark;
   }
   saveMarksInLocalStorage();
+  debiki2.reactelements.sidebar.forceUpdate();
   updateMarkGraphics(postId);
 }
 
 
 function setInitialReadMarkColors() {
-  $('.dw-p[id] .dw-p-mark').each(function() {
+  $('.dw-p[id] .dw-p-mark, .dw-p[data-id] .dw-p-mark').each(function() {
     setColorOfMark($(this), 0); // 0 means 0% read
   });
   var ids = getPostIdsReadLongAgo();
@@ -220,7 +229,7 @@ function saveMarksInLocalStorage() {
 function updateMarkGraphics(postId) {
   var state = readStatesByPostId[postId];
   var mark = state ? state.mark : null;
-  var post = $('#post-' + postId);
+  var post = findPostInMainViewAndSidebar(postId);
   switch (mark) {
     case ManualReadMark:
       post.addClass('dw-p-read');
@@ -266,7 +275,7 @@ function isInViewport($postBody){
 
 
 function setColorOfPost(postId, fractionRead) {
-  var mark = $('#post-' + postId).find('.dw-p-mark');
+  var mark = findPostInMainViewAndSidebar(postId).find('.dw-p-mark');
   setColorOfMark(mark, fractionRead);
 }
 
@@ -294,6 +303,12 @@ function setColorOfMark(mark, fractionRead) {
   }
   */
 }
+
+
+function findPostInMainViewAndSidebar(postId: number) {
+  return $('#post-' + postId + ', .dw-p[data-id="' + postId + '"]');
+}
+
 
 //------------------------------------------------------------------------------
    }

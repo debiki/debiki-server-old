@@ -368,11 +368,18 @@ var Post = createComponent({
       multireplReceivers = MultireplyReceivers({ post: post, allPosts: this.props.allPosts });
     }
 
-    var id = this.props.abbreviate ? undefined : 'post-' + post.postId;
+    var postAttributes = { className: 'dw-p' + extraClasses,
+          onMouseEnter: this.props.onMouseEnter, onClick: this.onClick };
+
+    if (this.props.abbreviate) {
+      postAttributes['data-id'] = post.postId;
+    }
+    else {
+      postAttributes['id'] = 'post-' + post.postId;
+    }
 
     return (
-      r.div({ className: 'dw-p' + extraClasses, id: id,
-            onMouseEnter: this.props.onMouseEnter, onClick: this.onClick },
+      r.div(postAttributes,
         pendingApprovalElem,
         multireplReceivers,
         headerElem,
@@ -477,12 +484,11 @@ var PostHeader = createComponent({
     var anyMark;
     if (post.postId !== TitleId && post.postId !== BodyPostId) {
       postId = r[linkFn]({ className: 'dw-p-link' }, '#', post.postId);
-      if (!this.props.abbreviate) {
-        // The outer -click makes the click area larger, because the marks are small.
-        anyMark =
-            r.span({ className: 'dw-p-mark-click', onClick: this.props.onMarkClick },
-              r.span({ className: 'dw-p-mark' }));
-      }
+
+      // The outer -click makes the click area larger, because the marks are small.
+      anyMark =
+          r.span({ className: 'dw-p-mark-click', onClick: this.props.onMarkClick },
+            r.span({ className: 'dw-p-mark' }));
     }
 
     var by = post.postId === BodyPostId ? 'By ' : '';
